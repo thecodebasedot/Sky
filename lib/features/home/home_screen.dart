@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return FloatingActionButton(
           onPressed: () {},
-          child: const Icon(Icons.add_call_rounded),
+          child: const Icon(Icons.add_call),
         );
     }
   }
