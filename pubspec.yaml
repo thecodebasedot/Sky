@@ -18,6 +18,13 @@ dependencies:
   # State management (lightweight, easy to swap later)
   provider: ^6.1.2
 
+  # Backend — Firebase (used when built with --dart-define=USE_FIREBASE=true;
+  # see docs/FIREBASE_SETUP.md). The app runs without any Firebase config when
+  # the flag is off.
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+
   # Utilities
   intl: ^0.19.0
   uuid: ^4.4.0

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../state/chat_store.dart';
 import '../calls/calls_screen.dart';
 import '../chats/chats_list_screen.dart';
+import '../settings/settings_screen.dart';
 import '../status/status_screen.dart';
 
 /// Top-level shell with bottom navigation between Chats, Status and Calls.
@@ -42,7 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
               PopupMenuItem(value: 'new_group', child: Text('New group')),
               PopupMenuItem(value: 'settings', child: Text('Settings')),
             ],
-            onSelected: (_) {},
+            onSelected: (value) {
+              if (value == 'settings') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              }
+            },
           ),
         ],
       ),

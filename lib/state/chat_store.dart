@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -6,24 +8,37 @@ import '../models/call.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
 import '../models/story.dart';
+import '../repositories/chat_repository.dart';
 
-/// In-memory app state. This is intentionally backend-agnostic: today it serves
-/// [MockData]; later, swap these methods for repository calls (REST/WebSocket).
+/// App state for messaging, backed by a [ChatRepository].
+///
+/// Call [bind] with the signed-in user id to start streaming their chats, and
+/// [bind] with `null` on sign-out to tear the subscriptions down. Calls and
+/// stories still come from [MockData] until their own backends land.
 class ChatStore extends ChangeNotifier {
-  ChatStore()
-      : _chats = MockData.chats(),
-        _calls = MockData.calls(),
-        _stories = MockData.stories();
+  ChatStore(this._repo);
 
+  final ChatRepository _repo;
   final _uuid = const Uuid();
 
-  List<Chat> _chats;
-  final List<CallLog> _calls;
-  final List<Story> _stories;
+  String? _myId;
+  List<Chat> _chats = const [];
 
-  String get myId => MockData.me.id;
+  // Active conversation message stream.
+  String? _activeChatId;
+  List<Message> _activeMessages = const [];
 
-  /// Chats sorted: pinned first, then by most-recent message.
+  StreamSubscription<List<Chat>>? _chatsSub;
+  StreamSubscription<List<Message>>? _messagesSub;
+  bool _disposed = false;
+
+  final List<CallLog> _calls = MockData.calls();
+  final List<Story> _stories = MockData.stories();
+
+  String get myId => _myId ?? MockData.me.id;
+  bool get isReady => _myId != null;
+
+  /// Chats sorted: pinned first, then most-recent activity.
   List<Chat> get chats {
     final list = [..._chats];
     list.sort((a, b) {
@@ -37,85 +52,74 @@ class ChatStore extends ChangeNotifier {
 
   List<CallLog> get calls => _calls;
   List<Story> get stories => _stories;
+  List<Message> get activeMessages => _activeMessages;
 
-  int get totalUnread =>
-      _chats.fold(0, (sum, c) => sum + c.unreadCount);
+  int get totalUnread => _chats.fold(0, (sum, c) => sum + c.unreadCount);
 
   Chat chatById(String id) => _chats.firstWhere((c) => c.id == id);
 
-  /// Append a text message from the current user and fake a "delivered" ack.
+  /// Begin (or end, when [userId] is null) streaming chats for a user.
+  ///
+  /// Safe to call from a provider's `update` (build phase): the resulting
+  /// notification is deferred to a microtask so it never fires mid-build.
+  void bind(String? userId) {
+    if (userId == _myId) return;
+    _myId = userId;
+    _chatsSub?.cancel();
+    _chats = const [];
+
+    if (userId != null) {
+      _chatsSub = _repo.watchChats(userId).listen((chats) {
+        _chats = chats;
+        notifyListeners();
+      });
+    }
+    Future.microtask(() {
+      if (!_disposed) notifyListeners();
+    });
+  }
+
+  /// Subscribe to a conversation's messages while its screen is open.
+  void openChat(String chatId) {
+    _activeChatId = chatId;
+    _activeMessages = const [];
+    _messagesSub?.cancel();
+    _messagesSub = _repo.watchMessages(chatId).listen((messages) {
+      if (_activeChatId == chatId) {
+        _activeMessages = messages;
+        notifyListeners();
+      }
+    });
+  }
+
+  void closeChat() {
+    _activeChatId = null;
+    _activeMessages = const [];
+    _messagesSub?.cancel();
+    _messagesSub = null;
+  }
+
   void sendText(String chatId, String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
-
-    final msg = Message(
+    _repo.sendMessage(Message(
       id: _uuid.v4(),
       chatId: chatId,
       senderId: myId,
       text: trimmed,
       timestamp: DateTime.now(),
       status: MessageStatus.sending,
-    );
-    _updateChat(chatId, addMessage: msg, clearUnread: true);
-
-    // Simulate network round-trip so the UI shows status progression.
-    Future.delayed(const Duration(milliseconds: 600), () {
-      _setStatus(chatId, msg.id, MessageStatus.sent);
-    });
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      _setStatus(chatId, msg.id, MessageStatus.delivered);
-    });
+    ));
   }
 
-  /// Mark a chat as read (clears the unread badge).
-  void markRead(String chatId) {
-    final i = _chats.indexWhere((c) => c.id == chatId);
-    if (i == -1 || _chats[i].unreadCount == 0) return;
-    _chats[i] = _copy(_chats[i], unreadCount: 0);
-    notifyListeners();
-  }
+  void markRead(String chatId) => _repo.markRead(chatId, myId);
 
-  void _setStatus(String chatId, String messageId, MessageStatus status) {
-    final i = _chats.indexWhere((c) => c.id == chatId);
-    if (i == -1) return;
-    final messages = _chats[i].messages.map((m) {
-      return m.id == messageId ? m.copyWith(status: status) : m;
-    }).toList();
-    _chats[i] = _copy(_chats[i], messages: messages);
-    notifyListeners();
-  }
-
-  void _updateChat(
-    String chatId, {
-    Message? addMessage,
-    bool clearUnread = false,
-  }) {
-    final i = _chats.indexWhere((c) => c.id == chatId);
-    if (i == -1) return;
-    final messages = [..._chats[i].messages, if (addMessage != null) addMessage];
-    _chats[i] = _copy(
-      _chats[i],
-      messages: messages,
-      unreadCount: clearUnread ? 0 : null,
-    );
-    notifyListeners();
-  }
-
-  Chat _copy(
-    Chat c, {
-    List<Message>? messages,
-    int? unreadCount,
-  }) {
-    return Chat(
-      id: c.id,
-      participants: c.participants,
-      isGroup: c.isGroup,
-      name: c.isGroup ? c.titleFor(myId) : null,
-      avatarUrl: c.avatarUrl,
-      messages: messages ?? c.messages,
-      unreadCount: unreadCount ?? c.unreadCount,
-      isMuted: c.isMuted,
-      isPinned: c.isPinned,
-    );
+  @override
+  void dispose() {
+    _disposed = true;
+    _chatsSub?.cancel();
+    _messagesSub?.cancel();
+    _repo.dispose();
+    super.dispose();
   }
 }

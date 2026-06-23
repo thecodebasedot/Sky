@@ -12,12 +12,20 @@ and status updates. This repository holds all of the engineering work.
 
 | Area | Status |
 |------|--------|
+| **Sign-in flow** (welcome → phone → OTP → profile) | ✅ Built (mock auth) |
+| **Settings / profile** with edit & sign-out | ✅ Built |
 | 1:1 & group **text messaging** | ✅ UI built (mock data) |
 | Message **status ticks** (sending → sent → delivered → read) | ✅ |
 | **Calls** tab + in-call screen (voice & video) | ✅ UI built |
 | **Status / stories** with full-screen viewer | ✅ UI built |
+| **Firebase backend** (phone auth + Firestore real-time messaging) | ✅ Integrated (opt-in flag) |
 | Media sharing (photos, voice notes, files) | 🟡 UI placeholders |
-| Real backend (auth, sync, push, WebRTC) | ⏳ Planned |
+| Calls (WebRTC), push notifications | ⏳ Planned |
+
+### 🔑 Trying the sign-in flow
+The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
+number, then on the verification screen enter **`123456`** (or any 6 digits).
+Auth runs against an in-memory `MockAuthService`; nothing is sent or stored.
 
 > The app currently runs entirely on local **mock data** so the full UI is
 > browsable before any backend exists. State lives in `ChatStore`, which is
@@ -39,19 +47,31 @@ lib/
 │   ├── chat.dart
 │   ├── call.dart
 │   └── story.dart
+├── config/
+│   └── app_config.dart       # USE_FIREBASE compile-time flag
 ├── data/
 │   └── mock_data.dart        # sample users, chats, calls, stories
+├── services/
+│   ├── auth_service.dart        # AuthService interface + MockAuthService
+│   └── firebase_auth_service.dart  # Firebase phone-auth implementation
+├── repositories/
+│   ├── chat_repository.dart        # messaging data interface
+│   ├── mock_chat_repository.dart   # in-memory real-time mock
+│   └── firestore_chat_repository.dart  # Cloud Firestore implementation
 ├── state/
-│   └── chat_store.dart       # in-memory app state (ChangeNotifier)
+│   ├── auth_store.dart       # auth status + signed-in profile
+│   └── chat_store.dart       # repository-backed messaging state
 ├── utils/
 │   └── time_format.dart      # relative time / duration helpers
 ├── widgets/
 │   └── avatar.dart           # shared avatar with initials + online dot
 └── features/
-    ├── home/                 # bottom-nav shell
+    ├── auth/                 # welcome, phone, OTP, profile setup
+    ├── home/                 # bottom-nav shell + auth gate
     ├── chats/                # chat list, thread, bubbles, composer
     ├── calls/                # call history + in-call screen
-    └── status/               # status list + story viewer
+    ├── status/               # status list + story viewer
+    └── settings/             # profile + app settings
 ```
 
 ---
@@ -74,8 +94,14 @@ flutter create .
 ### Install dependencies & run
 ```bash
 flutter pub get
-flutter run            # runs on a connected device / emulator
+flutter run                                  # mock backend (default, zero setup)
+flutter run --dart-define=USE_FIREBASE=true  # live Firebase backend
 ```
+
+By default Sky runs on an in-memory **mock backend**, so no accounts or
+credentials are needed. To make messaging real across devices, follow
+[`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) and run with the
+`USE_FIREBASE` flag. The toggle lives in `lib/config/app_config.dart`.
 
 ### Build release binaries
 ```bash
@@ -93,12 +119,15 @@ flutter test
 ## 🗺️ Roadmap
 
 1. **Foundation** ✅ — app skeleton, navigation, chat/calls/status UI on mock data
-2. **Backend & auth** — phone/OTP sign-in, user profiles, contact sync
-3. **Real-time messaging** — WebSocket/Firestore delivery, read receipts, typing
-4. **Media** — image/video/voice-note capture, upload & playback
-5. **Calls** — WebRTC voice & video, push-based call signaling
-6. **Status** — 24h-expiring uploads, privacy controls
-7. **Hardening** — end-to-end encryption, push notifications, offline cache
+2. **Auth & profiles** ✅ — phone/OTP sign-in flow, profile setup, settings, sign-out
+3. **Firebase backend** ✅ — Firebase phone auth + Firestore real-time messaging
+   behind a repository abstraction; opt-in via `--dart-define=USE_FIREBASE=true`
+   (see [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md))
+4. **Messaging UX** — contact picker / new-chat & group creation, typing & presence
+5. **Media** — image/video/voice-note capture, upload & playback (Firebase Storage)
+6. **Calls** — WebRTC voice & video, push-based call signaling
+7. **Status** — 24h-expiring uploads, privacy controls
+8. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
 ---
 
