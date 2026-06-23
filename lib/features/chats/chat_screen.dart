@@ -21,9 +21,19 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
+  late final ChatStore _store;
+
+  @override
+  void initState() {
+    super.initState();
+    _store = context.read<ChatStore>();
+    // Start streaming this conversation's messages.
+    _store.openChat(widget.chatId);
+  }
 
   @override
   void dispose() {
+    _store.closeChat();
     _scrollController.dispose();
     super.dispose();
   }
@@ -41,6 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final store = context.watch<ChatStore>();
     final chat = store.chatById(widget.chatId);
     final myId = store.myId;
+    final messages = store.activeMessages;
     _jumpToBottom();
 
     return Scaffold(
@@ -48,17 +59,17 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: chat.messages.isEmpty
+            child: messages.isEmpty
                 ? _emptyState(context)
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: chat.messages.length,
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final msg = chat.messages[index];
+                      final msg = messages[index];
                       final isMine = msg.senderId == myId;
                       final prev =
-                          index > 0 ? chat.messages[index - 1] : null;
+                          index > 0 ? messages[index - 1] : null;
                       final showSender = chat.isGroup &&
                           !isMine &&
                           prev?.senderId != msg.senderId;

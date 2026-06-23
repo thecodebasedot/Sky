@@ -53,7 +53,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Hello from a test');
     await tester.pump(); // let the composer swap mic → send
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Hello from a test'), findsOneWidget);
   });

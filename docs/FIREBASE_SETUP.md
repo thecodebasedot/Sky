@@ -1,0 +1,93 @@
+# Firebase setup
+
+Sky runs on a local **mock backend** by default. Follow these steps once to
+connect it to a real Firebase project so two devices can actually message each
+other. Everything here is one-time setup; afterwards you just run with the
+`USE_FIREBASE` flag on.
+
+> You'll need a Google account and the Flutter SDK already working
+> (`flutter doctor` is clean).
+
+---
+
+## 1. Create the Firebase project
+1. Go to the [Firebase console](https://console.firebase.google.com) →
+   **Add project**. Name it e.g. `sky-app`.
+2. In the project, open **Build → Authentication → Get started** and enable the
+   **Phone** sign-in provider.
+   - While testing, add a few **test phone numbers** (Authentication → Sign-in
+     method → Phone → *Phone numbers for testing*) so you don't burn real SMS.
+3. Open **Build → Firestore Database → Create database** (start in *production
+   mode*; we deploy rules below).
+
+## 2. Install the tooling
+```bash
+# Firebase CLI
+npm install -g firebase-tools
+firebase login
+
+# FlutterFire CLI
+dart pub global activate flutterfire_cli
+```
+
+## 3. Wire the apps to the project
+From the repo root:
+```bash
+flutterfire configure
+```
+Select your `sky-app` project and the platforms (Android, iOS). This generates
+`lib/firebase_options.dart` **and** adds the native config files
+(`android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`) plus
+the required Gradle/Pod wiring.
+
+> Sky calls `Firebase.initializeApp()` with no arguments, which picks up these
+> native config files automatically — no extra code needed.
+
+> **iOS:** Firebase requires a minimum deployment target of **iOS 13**. If the
+> Pod install complains, set `platform :ios, '13.0'` in `ios/Podfile` and
+> `IPHONEOS_DEPLOYMENT_TARGET = 13.0` in the Runner target, then
+> `cd ios && pod install`.
+
+## 4. Deploy the security rules
+The repo ships with `firestore.rules` (participants-only access). Deploy them:
+```bash
+firebase deploy --only firestore:rules
+```
+You may also want a composite index for the chats query. If the app logs a
+"requires an index" link at runtime, click it to auto-create the index for
+`chats` on `participantIds (array-contains) + updatedAt (desc)`.
+
+## 5. Run with Firebase enabled
+```bash
+flutter pub get
+flutter run --dart-define=USE_FIREBASE=true
+```
+Sign in with a test phone number and the code you configured in step 1.
+
+---
+
+## Data model (created automatically as you use the app)
+
+```
+users/{uid}
+  id, name, phoneNumber, about, avatarUrl, updatedAt
+
+chats/{chatId}
+  participantIds: [uid, ...]      ← drives the "my chats" query + rules
+  participants:   [{id,name,phoneNumber,avatarUrl,about}, ...]
+  isGroup, name, avatarUrl
+  lastMessage:    {text, type, senderId, timestamp}
+  unreadCounts:   {uid: int, ...}
+  updatedAt:      Timestamp
+
+chats/{chatId}/messages/{messageId}
+  senderId, text, type, status, timestamp, mediaUrl?, durationSeconds?
+```
+
+> **Note:** creating chats and a contact picker are upcoming work. The current
+> Firestore repository reads/streams chats and sends messages; seeding the first
+> conversations (or building the "new chat" flow) is the next task on the
+> messaging milestone.
+
+## Switching back to mock
+Just run without the flag (`flutter run`). No Firebase config is touched.
