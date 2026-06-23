@@ -11,8 +11,10 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.tap(find.text('Agree & continue'));
   await tester.pumpAndSettle();
 
-  // Phone entry.
+  // Phone entry. Pump so the field's listener enables the Continue button
+  // before we tap it.
   await tester.enterText(find.byKey(const Key('phone_field')), '555 0100');
+  await tester.pump();
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 
