@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/chat.dart';
 import '../../state/chat_store.dart';
+import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/avatar.dart';
 import '../calls/call_screen.dart';
@@ -63,7 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     return Scaffold(
-      appBar: _buildAppBar(context, chat, myId),
+      appBar: _buildAppBar(context, chat, myId, store.typingUserIds.isNotEmpty),
       body: Column(
         children: [
           Expanded(
@@ -113,6 +114,7 @@ class _ChatScreenState extends State<ChatScreen> {
               store.sendVoiceNote(widget.chatId, seconds);
               _jumpToBottom();
             },
+            onTyping: (typing) => store.setTyping(widget.chatId, typing),
           ),
         ],
       ),
@@ -131,15 +133,17 @@ class _ChatScreenState extends State<ChatScreen> {
     BuildContext context,
     Chat chat,
     String myId,
+    bool isTyping,
   ) {
     final other = chat.isGroup ? null : chat.otherParticipant(myId);
-    final subtitle = chat.isGroup
+    final presence = chat.isGroup
         ? '${chat.participants.length} members'
         : (other!.isOnline
             ? 'online'
             : (other.lastSeen != null
                 ? TimeFormat.lastSeen(other.lastSeen!)
                 : ''));
+    final subtitle = isTyping ? 'typing…' : presence;
 
     return AppBar(
       titleSpacing: 0,
@@ -170,7 +174,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.outline,
+                      fontStyle:
+                          isTyping ? FontStyle.italic : FontStyle.normal,
+                      color: isTyping
+                          ? AppTheme.skyBlue
+                          : Theme.of(context).colorScheme.outline,
                     ),
                   ),
               ],

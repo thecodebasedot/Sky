@@ -28,9 +28,11 @@ class ChatStore extends ChangeNotifier {
   // Active conversation message stream.
   String? _activeChatId;
   List<Message> _activeMessages = const [];
+  List<String> _typingUserIds = const [];
 
   StreamSubscription<List<Chat>>? _chatsSub;
   StreamSubscription<List<Message>>? _messagesSub;
+  StreamSubscription<List<String>>? _typingSub;
   bool _disposed = false;
 
   final List<CallLog> _calls = MockData.calls();
@@ -106,24 +108,45 @@ class ChatStore extends ChangeNotifier {
     });
   }
 
-  /// Subscribe to a conversation's messages while its screen is open.
+  /// Ids of other participants typing in the open conversation.
+  List<String> get typingUserIds => _typingUserIds;
+
+  /// Subscribe to a conversation's messages (and typing) while open.
   void openChat(String chatId) {
     _activeChatId = chatId;
     _activeMessages = const [];
+    _typingUserIds = const [];
     _messagesSub?.cancel();
+    _typingSub?.cancel();
     _messagesSub = _repo.watchMessages(chatId).listen((messages) {
       if (_activeChatId == chatId) {
         _activeMessages = messages;
         notifyListeners();
       }
     });
+    _typingSub = _repo.watchTyping(chatId, myId).listen((ids) {
+      if (_activeChatId == chatId) {
+        _typingUserIds = ids;
+        notifyListeners();
+      }
+    });
   }
 
   void closeChat() {
+    final chatId = _activeChatId;
+    if (chatId != null) _repo.setTyping(chatId, myId, false);
     _activeChatId = null;
     _activeMessages = const [];
+    _typingUserIds = const [];
     _messagesSub?.cancel();
     _messagesSub = null;
+    _typingSub?.cancel();
+    _typingSub = null;
+  }
+
+  /// Report whether the current user is typing in [chatId].
+  void setTyping(String chatId, bool isTyping) {
+    _repo.setTyping(chatId, myId, isTyping);
   }
 
   void sendText(String chatId, String text) {
@@ -187,6 +210,7 @@ class ChatStore extends ChangeNotifier {
     _disposed = true;
     _chatsSub?.cancel();
     _messagesSub?.cancel();
+    _typingSub?.cancel();
     _repo.dispose();
     super.dispose();
   }

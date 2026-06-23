@@ -10,10 +10,14 @@ class MessageComposer extends StatefulWidget {
     required this.onSendImage,
     required this.onSendFile,
     required this.onSendVoice,
+    required this.onTyping,
   });
 
   /// Send a plain text message.
   final ValueChanged<String> onSend;
+
+  /// Report whether the user is currently composing.
+  final ValueChanged<bool> onTyping;
 
   /// Send an image (from gallery or camera).
   final VoidCallback onSendImage;
@@ -37,7 +41,10 @@ class _MessageComposerState extends State<MessageComposer> {
     super.initState();
     _controller.addListener(() {
       final has = _controller.text.trim().isNotEmpty;
-      if (has != _hasText) setState(() => _hasText = has);
+      if (has != _hasText) {
+        setState(() => _hasText = has);
+        widget.onTyping(has);
+      }
     });
   }
 
@@ -52,6 +59,7 @@ class _MessageComposerState extends State<MessageComposer> {
     if (text.trim().isEmpty) return;
     widget.onSend(text);
     _controller.clear();
+    widget.onTyping(false);
   }
 
   Future<void> _openAttachmentSheet() async {

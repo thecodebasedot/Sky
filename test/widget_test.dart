@@ -60,6 +60,21 @@ void main() {
     expect(find.text('Hello from a test'), findsOneWidget);
   });
 
+  testWidgets('Sending a message triggers an auto-reply', (tester) async {
+    await _signIn(tester);
+
+    await tester.tap(find.text('Amara Okafor').first);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Hi Amara');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+
+    // The mock "other participant" types, then replies.
+    expect(find.text('Got it 👍'), findsOneWidget);
+  });
+
   testWidgets('Attachment menu can send a document', (tester) async {
     await _signIn(tester);
 
