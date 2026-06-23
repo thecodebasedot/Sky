@@ -73,6 +73,26 @@ in the Firebase console, then add the platform permission strings:
 On the mock backend, "Gallery"/"Camera" just attach a sample image — no
 permissions needed.
 
+### Calls (WebRTC)
+Voice/video calls use `flutter_webrtc` with **Firestore as the signaling
+channel** (offer/answer/ICE under `calls/{callId}`; rules included in
+`firestore.rules`). Add the platform permissions:
+
+- **iOS** (`ios/Runner/Info.plist`): `NSCameraUsageDescription`,
+  `NSMicrophoneUsageDescription`. Min iOS 13.
+- **Android** (`android/app/src/main/AndroidManifest.xml`):
+  `CAMERA`, `RECORD_AUDIO`, `INTERNET`, plus `MODIFY_AUDIO_SETTINGS`.
+  `minSdkVersion` ≥ 23.
+
+> ⚠️ **Device-bound & not yet complete for production.** The caller flow
+> (place a call → offer → apply answer → exchange ICE) is implemented and must
+> be verified on **two physical devices**. Still to wire for real-world use:
+> the **incoming-call listener** (so the callee's device rings — watch `calls`
+> where `calleeId == myUid` and present the call screen as callee), and a
+> **TURN server** for calls that can't traverse NAT (STUN alone isn't enough on
+> many networks). On the mock backend, calls are fully simulated — no
+> permissions or devices needed.
+
 ## 5. Run with Firebase enabled
 ```bash
 flutter pub get

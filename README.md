@@ -24,7 +24,8 @@ and status updates. This repository holds all of the engineering work.
 | **Typing indicators** + online / last-seen presence | ✅ Built (mock + Firestore) |
 | **Photo capture + upload** (image_picker + Firebase Storage) | ✅ Built (mock sends a sample) |
 | **Call lifecycle & in-call UI** (dial → ring → connect → duration → end) | ✅ Built (simulated) |
-| WebRTC media + signaling, push notifications | ⏳ Planned |
+| **WebRTC voice/video** + Firestore signaling | 🟡 Caller flow built (needs device + incoming-call/TURN) |
+| Push notifications, status uploads, E2E encryption | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -136,9 +137,10 @@ Actions (`.github/workflows/ci.yml`).
    (mock simulates the other participant typing and auto-replying)
 7. **Photo upload** ✅ — `image_picker` capture + Firebase Storage upload behind a
    `MediaService` abstraction (mock attaches a sample image; `storage.rules` included)
-8. **Calls** 🟡 — in-call lifecycle & UI behind a `CallService` abstraction
-   (dial → ring → connect → live duration → end, with mute/video/speaker), on a
-   simulated `MockCallService`. _Next: real `flutter_webrtc` media + Firestore signaling._
+8. **Calls** 🟡 — in-call lifecycle & UI behind a `CallService` abstraction, plus a
+   real `WebRTCCallService` (flutter_webrtc media + Firestore offer/answer/ICE
+   signaling, caller flow). _Needs on-device verification; incoming-call ringing +
+   TURN are the remaining wiring for production._
 9. **Status** — 24h-expiring uploads, privacy controls
 10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 

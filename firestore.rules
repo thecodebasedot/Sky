@@ -47,5 +47,23 @@ service cloud.firestore {
           && resource.data.senderId == request.auth.uid;
       }
     }
+
+    // Call signaling. Only the two parties may read/update the call doc; ICE
+    // candidate subcollections are readable/writable by any signed-in user
+    // (they're only useful to the matching call).
+    match /calls/{callId} {
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId
+            || request.auth.uid == resource.data.calleeId);
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.callerId;
+      allow update: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId
+            || request.auth.uid == resource.data.calleeId);
+
+      match /{candidateSet}/{candidateId} {
+        allow read, write: if isSignedIn();
+      }
+    }
   }
 }

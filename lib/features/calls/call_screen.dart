@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../config/app_config.dart';
 import '../../models/user.dart';
 import '../../services/call_service.dart';
+import '../../services/webrtc_call_service.dart';
+import '../../state/auth_store.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/avatar.dart';
 
@@ -24,9 +29,23 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void initState() {
     super.initState();
-    _call = MockCallService(video: widget.isVideo);
+    _call = _createService();
     _call.addListener(_onCallChanged);
     _call.start();
+  }
+
+  CallService _createService() {
+    if (AppConfig.useFirebase) {
+      final myId = context.read<AuthStore>().user?.id ?? 'me';
+      return WebRTCCallService(
+        callId: const Uuid().v4(),
+        callerId: myId,
+        calleeId: widget.user.id,
+        video: widget.isVideo,
+        isCaller: true,
+      );
+    }
+    return MockCallService(video: widget.isVideo);
   }
 
   void _onCallChanged() {
@@ -70,7 +89,19 @@ class _CallScreenState extends State<CallScreen> {
       backgroundColor: const Color(0xFF0E1621),
       body: Stack(
         children: [
-          if (showVideo) _videoPlaceholder(),
+          if (showVideo)
+            Positioned.fill(child: _call.remoteView ?? _videoPlaceholder()),
+          if (showVideo && _call.localView != null)
+            Positioned(
+              top: 48,
+              right: 16,
+              width: 104,
+              height: 150,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _call.localView!,
+              ),
+            ),
           SafeArea(
             child: Column(
               children: [

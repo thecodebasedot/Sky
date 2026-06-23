@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 /// Lifecycle of a call.
 enum CallPhase { dialing, ringing, connecting, connected, ended }
@@ -18,6 +18,11 @@ abstract class CallService extends ChangeNotifier {
   bool get muted;
   bool get videoEnabled;
   bool get speakerOn;
+
+  /// Local/remote video widgets, when the implementation has real media.
+  /// Null falls back to a placeholder in the UI.
+  Widget? get localView => null;
+  Widget? get remoteView => null;
 
   /// Begin placing/connecting the call.
   Future<void> start();
