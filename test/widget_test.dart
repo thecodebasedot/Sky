@@ -12,16 +12,16 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.pumpAndSettle();
 
   // Phone entry.
-  await tester.enterText(find.byType(TextField).last, '555 0100');
+  await tester.enterText(find.byKey(const Key('phone_field')), '555 0100');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 
   // OTP entry (mock accepts any 6 digits).
-  await tester.enterText(find.byType(TextField).first, '123456');
+  await tester.enterText(find.byKey(const Key('otp_field')), '123456');
   await tester.pumpAndSettle();
 
   // Profile setup.
-  await tester.enterText(find.byType(TextField).first, 'Test User');
+  await tester.enterText(find.byKey(const Key('name_field')), 'Test User');
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();

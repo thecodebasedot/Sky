@@ -77,6 +77,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ),
             const SizedBox(height: 28),
             TextField(
+              key: const Key('name_field'),
               controller: _nameController,
               textCapitalization: TextCapitalization.words,
               autofocus: true,
