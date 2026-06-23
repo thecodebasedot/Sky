@@ -19,9 +19,8 @@ and status updates. This repository holds all of the engineering work.
 | **Calls** tab + in-call screen (voice & video) | ✅ UI built |
 | **Status / stories** with full-screen viewer | ✅ UI built |
 | **Firebase backend** (phone auth + Firestore real-time messaging) | ✅ Integrated (opt-in flag) |
-| **New chat**: contact picker + group creation | ✅ Built (mock + Firestore) |
 | Media sharing (photos, voice notes, files) | 🟡 UI placeholders |
-| Typing & presence, calls (WebRTC), push notifications | ⏳ Planned |
+| Calls (WebRTC), push notifications | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -69,7 +68,7 @@ lib/
 └── features/
     ├── auth/                 # welcome, phone, OTP, profile setup
     ├── home/                 # bottom-nav shell + auth gate
-    ├── chats/                # chat list, thread, bubbles, composer, new-chat & group
+    ├── chats/                # chat list, thread, bubbles, composer
     ├── calls/                # call history + in-call screen
     ├── status/               # status list + story viewer
     └── settings/             # profile + app settings
@@ -115,9 +114,6 @@ flutter build ios      # iOS (requires macOS + Xcode)
 flutter test
 ```
 
-Every push and pull request runs `flutter analyze` + `flutter test` via GitHub
-Actions (`.github/workflows/ci.yml`).
-
 ---
 
 ## 🗺️ Roadmap
@@ -127,7 +123,7 @@ Actions (`.github/workflows/ci.yml`).
 3. **Firebase backend** ✅ — Firebase phone auth + Firestore real-time messaging
    behind a repository abstraction; opt-in via `--dart-define=USE_FIREBASE=true`
    (see [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md))
-4. **Messaging UX** ✅ — contact picker / new-chat & group creation _(typing & presence next)_
+4. **Messaging UX** — contact picker / new-chat & group creation, typing & presence
 5. **Media** — image/video/voice-note capture, upload & playback (Firebase Storage)
 6. **Calls** — WebRTC voice & video, push-based call signaling
 7. **Status** — 24h-expiring uploads, privacy controls

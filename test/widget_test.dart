@@ -57,22 +57,4 @@ void main() {
 
     expect(find.text('Hello from a test'), findsOneWidget);
   });
-
-  testWidgets('New-chat picker creates and opens a conversation',
-      (tester) async {
-    await _signIn(tester);
-
-    // Open the contact picker from the Chats FAB.
-    await tester.tap(find.byIcon(Icons.add_comment_rounded));
-    await tester.pumpAndSettle();
-    expect(find.text('Select contact'), findsOneWidget);
-
-    // Noah has no existing direct chat — this exercises chat creation.
-    await tester.tap(find.text('Noah Kim'));
-    await tester.pumpAndSettle();
-
-    // We land in the conversation with Noah.
-    expect(find.text('Noah Kim'), findsWidgets);
-    expect(find.text('Select contact'), findsNothing);
-  });
 }
