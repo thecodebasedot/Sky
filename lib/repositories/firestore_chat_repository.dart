@@ -83,7 +83,70 @@ class FirestoreChatRepository implements ChatRepository {
   }
 
   @override
+  Future<List<SkyUser>> fetchContacts(String userId) async {
+    final snap = await _db.collection('users').get();
+    return snap.docs
+        .where((d) => d.id != userId)
+        .map((d) => _userFromMap({...d.data(), 'id': d.id}))
+        .toList();
+  }
+
+  @override
+  Future<Chat> startDirectChat(SkyUser me, SkyUser other) async {
+    // Deterministic id so both participants resolve to the same document.
+    final ids = [me.id, other.id]..sort();
+    final chatId = ids.join('_');
+    final ref = _chats.doc(chatId);
+
+    final existing = await ref.get();
+    if (!existing.exists) {
+      await ref.set({
+        'participantIds': ids,
+        'participants': [_userToMap(me), _userToMap(other)],
+        'isGroup': false,
+        'name': null,
+        'avatarUrl': null,
+        'unreadCounts': {me.id: 0, other.id: 0},
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    return _chatFromDoc(await ref.get(), me.id);
+  }
+
+  @override
+  Future<Chat> createGroup({
+    required SkyUser me,
+    required List<SkyUser> members,
+    required String name,
+  }) async {
+    final participants = [me, ...members];
+    final ids = participants.map((u) => u.id).toList();
+    final ref = _chats.doc();
+
+    await ref.set({
+      'participantIds': ids,
+      'participants': participants.map(_userToMap).toList(),
+      'isGroup': true,
+      'name': name,
+      'avatarUrl': null,
+      'unreadCounts': {for (final id in ids) id: 0},
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return _chatFromDoc(await ref.get(), me.id);
+  }
+
+  @override
   void dispose() {}
+
+  Map<String, dynamic> _userToMap(SkyUser u) {
+    return {
+      'id': u.id,
+      'name': u.name,
+      'phoneNumber': u.phoneNumber,
+      'avatarUrl': u.avatarUrl,
+      'about': u.about,
+    };
+  }
 
   // ---- mapping ----
 

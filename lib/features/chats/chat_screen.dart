@@ -54,6 +54,14 @@ class _ChatScreenState extends State<ChatScreen> {
     final messages = store.activeMessages;
     _jumpToBottom();
 
+    // A freshly created chat may not have streamed into the list yet.
+    if (chat == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: _buildAppBar(context, chat, myId),
       body: Column(
