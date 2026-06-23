@@ -8,7 +8,6 @@ import '../models/call.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
 import '../models/story.dart';
-import '../models/user.dart';
 import '../repositories/chat_repository.dart';
 
 /// App state for messaging, backed by a [ChatRepository].
@@ -57,33 +56,7 @@ class ChatStore extends ChangeNotifier {
 
   int get totalUnread => _chats.fold(0, (sum, c) => sum + c.unreadCount);
 
-  /// Returns the chat with [id], or null if it hasn't streamed in yet
-  /// (e.g. immediately after creating a new conversation).
-  Chat? chatById(String id) {
-    for (final c in _chats) {
-      if (c.id == id) return c;
-    }
-    return null;
-  }
-
-  /// People the signed-in user can start a chat with.
-  Future<List<SkyUser>> contacts() => _repo.fetchContacts(myId);
-
-  /// Open or create a 1:1 chat; returns its id for navigation.
-  Future<String> startDirectChat(SkyUser me, SkyUser other) async {
-    final chat = await _repo.startDirectChat(me, other);
-    return chat.id;
-  }
-
-  /// Create a group chat; returns its id for navigation.
-  Future<String> createGroup(
-    SkyUser me,
-    List<SkyUser> members,
-    String name,
-  ) async {
-    final chat = await _repo.createGroup(me: me, members: members, name: name);
-    return chat.id;
-  }
+  Chat chatById(String id) => _chats.firstWhere((c) => c.id == id);
 
   /// Begin (or end, when [userId] is null) streaming chats for a user.
   ///
