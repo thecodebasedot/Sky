@@ -11,17 +11,19 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.tap(find.text('Agree & continue'));
   await tester.pumpAndSettle();
 
-  // Phone entry.
-  await tester.enterText(find.byType(TextField).last, '555 0100');
+  // Phone entry. Pump so the field's listener enables the Continue button
+  // before we tap it.
+  await tester.enterText(find.byKey(const Key('phone_field')), '555 0100');
+  await tester.pump();
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 
   // OTP entry (mock accepts any 6 digits).
-  await tester.enterText(find.byType(TextField).first, '123456');
+  await tester.enterText(find.byKey(const Key('otp_field')), '123456');
   await tester.pumpAndSettle();
 
   // Profile setup.
-  await tester.enterText(find.byType(TextField).first, 'Test User');
+  await tester.enterText(find.byKey(const Key('name_field')), 'Test User');
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
@@ -56,5 +58,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hello from a test'), findsOneWidget);
+  });
+
+  testWidgets('New-chat picker creates and opens a conversation',
+      (tester) async {
+    await _signIn(tester);
+
+    // Open the contact picker from the Chats FAB.
+    await tester.tap(find.byIcon(Icons.add_comment_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Select contact'), findsOneWidget);
+
+    // Noah has no existing direct chat — this exercises chat creation.
+    await tester.tap(find.text('Noah Kim'));
+    await tester.pumpAndSettle();
+
+    // We land in the conversation with Noah.
+    expect(find.text('Noah Kim'), findsWidgets);
+    expect(find.text('Select contact'), findsNothing);
   });
 }

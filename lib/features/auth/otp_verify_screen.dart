@@ -64,6 +64,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
             ),
             const SizedBox(height: 32),
             TextField(
+              key: const Key('otp_field'),
               controller: _controller,
               autofocus: true,
               keyboardType: TextInputType.number,

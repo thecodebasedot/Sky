@@ -50,11 +50,11 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         selectedItemColor: skyBlue,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,

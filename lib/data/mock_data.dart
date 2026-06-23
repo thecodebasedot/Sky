@@ -24,7 +24,7 @@ class MockData {
     isOnline: true,
   );
 
-  static final SkyUser amara = SkyUser(
+  static const SkyUser amara = SkyUser(
     id: 'u_amara',
     name: 'Amara Okafor',
     phoneNumber: '+1 555 0111',
@@ -49,7 +49,7 @@ class MockData {
     lastSeen: _ago(minutes: 12),
   );
 
-  static final SkyUser noah = SkyUser(
+  static const SkyUser noah = SkyUser(
     id: 'u_noah',
     name: 'Noah Kim',
     phoneNumber: '+1 555 0114',

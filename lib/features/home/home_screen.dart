@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../state/chat_store.dart';
 import '../calls/calls_screen.dart';
 import '../chats/chats_list_screen.dart';
+import '../chats/new_chat_screen.dart';
 import '../settings/settings_screen.dart';
 import '../status/status_screen.dart';
 
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final unread = context.watch<ChatStore>().totalUnread;
 
-    final pages = const [
+    const pages = [
       ChatsListScreen(),
       StatusScreen(),
       CallsScreen(),
@@ -89,7 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (_index) {
       case 0:
         return FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NewChatScreen()),
+            );
+          },
           child: const Icon(Icons.add_comment_rounded),
         );
       case 1:
@@ -100,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return FloatingActionButton(
           onPressed: () {},
-          child: const Icon(Icons.add_call_rounded),
+          child: const Icon(Icons.add_call),
         );
     }
   }

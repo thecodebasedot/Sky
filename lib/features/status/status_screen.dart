@@ -32,10 +32,10 @@ class StatusScreen extends StatelessWidget {
 
   Widget _myStatus(BuildContext context) {
     return ListTile(
-      leading: Stack(
+      leading: const Stack(
         children: [
           Avatar(user: MockData.me, radius: 24),
-          const Positioned(
+          Positioned(
             right: 0,
             bottom: 0,
             child: CircleAvatar(

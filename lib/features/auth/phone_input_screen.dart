@@ -86,6 +86,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: TextField(
+                    key: const Key('phone_field'),
                     controller: _controller,
                     keyboardType: TextInputType.phone,
                     autofocus: true,
