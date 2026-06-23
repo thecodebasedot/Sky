@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Security rules for Sky's Firebase Storage (chat media uploads).
+// Deploy with:  firebase deploy --only storage
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Chat media lives under chat_media/{chatId}/{fileName}.
+    // Any signed-in user may read; uploads are limited to signed-in users
+    // and to images under 10 MB.
+    match /chat_media/{chatId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

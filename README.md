@@ -22,7 +22,7 @@ and status updates. This repository holds all of the engineering work.
 | **New chat**: contact picker + group creation | ✅ Built (mock + Firestore) |
 | **Media sharing**: attachment menu, image / voice / file messages | ✅ In-app flow built |
 | **Typing indicators** + online / last-seen presence | ✅ Built (mock + Firestore) |
-| Device capture + Firebase Storage upload | ⏳ Planned |
+| **Photo capture + upload** (image_picker + Firebase Storage) | ✅ Built (mock sends a sample) |
 | Calls (WebRTC), push notifications | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
@@ -131,12 +131,13 @@ Actions (`.github/workflows/ci.yml`).
    (see [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md))
 4. **Messaging UX** ✅ — contact picker / new-chat & group creation
 5. **Media** ✅ — attachment menu; image / voice-note / file messages rendered in chat
-   _(next: device capture via `image_picker` + upload to Firebase Storage)_
 6. **Typing & presence** ✅ — live typing indicators + online / last-seen, via Firestore
    (mock simulates the other participant typing and auto-replying)
-7. **Calls** — WebRTC voice & video, push-based call signaling
-8. **Status** — 24h-expiring uploads, privacy controls
-9. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
+7. **Photo upload** ✅ — `image_picker` capture + Firebase Storage upload behind a
+   `MediaService` abstraction (mock attaches a sample image; `storage.rules` included)
+8. **Calls** — WebRTC voice & video, push-based call signaling
+9. **Status** — 24h-expiring uploads, privacy controls
+10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
 ---
 

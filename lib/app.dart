@@ -10,6 +10,8 @@ import 'repositories/firestore_chat_repository.dart';
 import 'repositories/mock_chat_repository.dart';
 import 'services/auth_service.dart';
 import 'services/firebase_auth_service.dart';
+import 'services/firebase_media_service.dart';
+import 'services/media_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
 import 'theme/app_theme.dart';
@@ -22,6 +24,10 @@ AuthService _buildAuthService() =>
 ChatRepository _buildChatRepository() =>
     AppConfig.useFirebase ? FirestoreChatRepository() : MockChatRepository();
 
+/// Selects the media backend based on [AppConfig].
+MediaService _buildMediaService() =>
+    AppConfig.useFirebase ? FirebaseMediaService() : MockMediaService();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -31,6 +37,7 @@ class SkyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthStore(_buildAuthService())),
+        Provider<MediaService>(create: (_) => _buildMediaService()),
         // ChatStore lives above the navigator so pushed screens can read it,
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(
