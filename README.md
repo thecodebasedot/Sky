@@ -12,12 +12,19 @@ and status updates. This repository holds all of the engineering work.
 
 | Area | Status |
 |------|--------|
+| **Sign-in flow** (welcome → phone → OTP → profile) | ✅ Built (mock auth) |
+| **Settings / profile** with edit & sign-out | ✅ Built |
 | 1:1 & group **text messaging** | ✅ UI built (mock data) |
 | Message **status ticks** (sending → sent → delivered → read) | ✅ |
 | **Calls** tab + in-call screen (voice & video) | ✅ UI built |
 | **Status / stories** with full-screen viewer | ✅ UI built |
 | Media sharing (photos, voice notes, files) | 🟡 UI placeholders |
-| Real backend (auth, sync, push, WebRTC) | ⏳ Planned |
+| Real backend (sync, push, WebRTC) | ⏳ Planned |
+
+### 🔑 Trying the sign-in flow
+The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
+number, then on the verification screen enter **`123456`** (or any 6 digits).
+Auth runs against an in-memory `MockAuthService`; nothing is sent or stored.
 
 > The app currently runs entirely on local **mock data** so the full UI is
 > browsable before any backend exists. State lives in `ChatStore`, which is
@@ -41,17 +48,22 @@ lib/
 │   └── story.dart
 ├── data/
 │   └── mock_data.dart        # sample users, chats, calls, stories
+├── services/
+│   └── auth_service.dart     # AuthService interface + MockAuthService
 ├── state/
+│   ├── auth_store.dart       # auth status + signed-in profile
 │   └── chat_store.dart       # in-memory app state (ChangeNotifier)
 ├── utils/
 │   └── time_format.dart      # relative time / duration helpers
 ├── widgets/
 │   └── avatar.dart           # shared avatar with initials + online dot
 └── features/
-    ├── home/                 # bottom-nav shell
+    ├── auth/                 # welcome, phone, OTP, profile setup
+    ├── home/                 # bottom-nav shell + auth gate
     ├── chats/                # chat list, thread, bubbles, composer
     ├── calls/                # call history + in-call screen
-    └── status/               # status list + story viewer
+    ├── status/               # status list + story viewer
+    └── settings/             # profile + app settings
 ```
 
 ---
@@ -93,7 +105,8 @@ flutter test
 ## 🗺️ Roadmap
 
 1. **Foundation** ✅ — app skeleton, navigation, chat/calls/status UI on mock data
-2. **Backend & auth** — phone/OTP sign-in, user profiles, contact sync
+2. **Auth & profiles** ✅ — phone/OTP sign-in flow, profile setup, settings, sign-out
+   _(mock backend; swap `MockAuthService` for Firebase Auth or Supabase to go live)_
 3. **Real-time messaging** — WebSocket/Firestore delivery, read receipts, typing
 4. **Media** — image/video/voice-note capture, upload & playback
 5. **Calls** — WebRTC voice & video, push-based call signaling
