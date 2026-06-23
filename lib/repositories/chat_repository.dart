@@ -36,6 +36,13 @@ abstract class ChatRepository {
     required String name,
   });
 
+  /// Stream the ids of participants currently typing in [chatId], excluding
+  /// [myId].
+  Stream<List<String>> watchTyping(String chatId, String myId);
+
+  /// Mark [userId] as typing (or not) in [chatId].
+  void setTyping(String chatId, String userId, bool isTyping);
+
   /// Release any resources / subscriptions.
   void dispose();
 }

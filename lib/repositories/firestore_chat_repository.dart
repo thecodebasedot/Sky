@@ -136,6 +136,28 @@ class FirestoreChatRepository implements ChatRepository {
   }
 
   @override
+  Stream<List<String>> watchTyping(String chatId, String myId) {
+    return _chats.doc(chatId).snapshots().map((doc) {
+      final typing = doc.data()?['typing'] as Map? ?? const {};
+      return typing.entries
+          .where((e) => e.value == true && e.key != myId)
+          .map((e) => e.key.toString())
+          .toList();
+    });
+  }
+
+  @override
+  void setTyping(String chatId, String userId, bool isTyping) {
+    // Fire-and-forget; typing state is ephemeral.
+    _chats.doc(chatId).set(
+      {
+        'typing': {userId: isTyping},
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  @override
   void dispose() {}
 
   Map<String, dynamic> _userToMap(SkyUser u) {

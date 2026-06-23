@@ -28,9 +28,11 @@ class ChatStore extends ChangeNotifier {
   // Active conversation message stream.
   String? _activeChatId;
   List<Message> _activeMessages = const [];
+  List<String> _typingUserIds = const [];
 
   StreamSubscription<List<Chat>>? _chatsSub;
   StreamSubscription<List<Message>>? _messagesSub;
+  StreamSubscription<List<String>>? _typingSub;
   bool _disposed = false;
 
   final List<CallLog> _calls = MockData.calls();
@@ -106,24 +108,45 @@ class ChatStore extends ChangeNotifier {
     });
   }
 
-  /// Subscribe to a conversation's messages while its screen is open.
+  /// Ids of other participants typing in the open conversation.
+  List<String> get typingUserIds => _typingUserIds;
+
+  /// Subscribe to a conversation's messages (and typing) while open.
   void openChat(String chatId) {
     _activeChatId = chatId;
     _activeMessages = const [];
+    _typingUserIds = const [];
     _messagesSub?.cancel();
+    _typingSub?.cancel();
     _messagesSub = _repo.watchMessages(chatId).listen((messages) {
       if (_activeChatId == chatId) {
         _activeMessages = messages;
         notifyListeners();
       }
     });
+    _typingSub = _repo.watchTyping(chatId, myId).listen((ids) {
+      if (_activeChatId == chatId) {
+        _typingUserIds = ids;
+        notifyListeners();
+      }
+    });
   }
 
   void closeChat() {
+    final chatId = _activeChatId;
+    if (chatId != null) _repo.setTyping(chatId, myId, false);
     _activeChatId = null;
     _activeMessages = const [];
+    _typingUserIds = const [];
     _messagesSub?.cancel();
     _messagesSub = null;
+    _typingSub?.cancel();
+    _typingSub = null;
+  }
+
+  /// Report whether the current user is typing in [chatId].
+  void setTyping(String chatId, bool isTyping) {
+    _repo.setTyping(chatId, myId, isTyping);
   }
 
   void sendText(String chatId, String text) {
@@ -141,11 +164,53 @@ class ChatStore extends ChangeNotifier {
 
   void markRead(String chatId) => _repo.markRead(chatId, myId);
 
+  /// Send an image message. [mediaUrl] points at the (already-uploaded) image;
+  /// until device capture + Storage upload land, callers pass a sample URL.
+  void sendImage(String chatId, {String? caption, String? mediaUrl}) {
+    _send(
+      chatId,
+      type: MessageType.image,
+      text: caption?.trim() ?? '',
+      mediaUrl: mediaUrl,
+    );
+  }
+
+  /// Send a voice note of [seconds] length.
+  void sendVoiceNote(String chatId, int seconds) {
+    _send(chatId, type: MessageType.voice, durationSeconds: seconds);
+  }
+
+  /// Send a file/document message labelled [fileName].
+  void sendFile(String chatId, String fileName) {
+    _send(chatId, type: MessageType.file, text: fileName);
+  }
+
+  void _send(
+    String chatId, {
+    required MessageType type,
+    String text = '',
+    String? mediaUrl,
+    int? durationSeconds,
+  }) {
+    _repo.sendMessage(Message(
+      id: _uuid.v4(),
+      chatId: chatId,
+      senderId: myId,
+      text: text,
+      type: type,
+      mediaUrl: mediaUrl,
+      durationSeconds: durationSeconds,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    ));
+  }
+
   @override
   void dispose() {
     _disposed = true;
     _chatsSub?.cancel();
     _messagesSub?.cancel();
+    _typingSub?.cancel();
     _repo.dispose();
     super.dispose();
   }

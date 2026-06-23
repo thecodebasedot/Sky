@@ -20,8 +20,10 @@ and status updates. This repository holds all of the engineering work.
 | **Status / stories** with full-screen viewer | ✅ UI built |
 | **Firebase backend** (phone auth + Firestore real-time messaging) | ✅ Integrated (opt-in flag) |
 | **New chat**: contact picker + group creation | ✅ Built (mock + Firestore) |
-| Media sharing (photos, voice notes, files) | 🟡 UI placeholders |
-| Typing & presence, calls (WebRTC), push notifications | ⏳ Planned |
+| **Media sharing**: attachment menu, image / voice / file messages | ✅ In-app flow built |
+| **Typing indicators** + online / last-seen presence | ✅ Built (mock + Firestore) |
+| Device capture + Firebase Storage upload | ⏳ Planned |
+| Calls (WebRTC), push notifications | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -127,11 +129,14 @@ Actions (`.github/workflows/ci.yml`).
 3. **Firebase backend** ✅ — Firebase phone auth + Firestore real-time messaging
    behind a repository abstraction; opt-in via `--dart-define=USE_FIREBASE=true`
    (see [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md))
-4. **Messaging UX** ✅ — contact picker / new-chat & group creation _(typing & presence next)_
-5. **Media** — image/video/voice-note capture, upload & playback (Firebase Storage)
-6. **Calls** — WebRTC voice & video, push-based call signaling
-7. **Status** — 24h-expiring uploads, privacy controls
-8. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
+4. **Messaging UX** ✅ — contact picker / new-chat & group creation
+5. **Media** ✅ — attachment menu; image / voice-note / file messages rendered in chat
+   _(next: device capture via `image_picker` + upload to Firebase Storage)_
+6. **Typing & presence** ✅ — live typing indicators + online / last-seen, via Firestore
+   (mock simulates the other participant typing and auto-replying)
+7. **Calls** — WebRTC voice & video, push-based call signaling
+8. **Status** — 24h-expiring uploads, privacy controls
+9. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
 ---
 

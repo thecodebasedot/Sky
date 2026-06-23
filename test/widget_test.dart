@@ -29,6 +29,14 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Advance past the mock backend's simulated delays (delivery acks + the
+/// other participant's typing/auto-reply), then settle. Without this, those
+/// pending timers trip the "Timer still pending after dispose" check.
+Future<void> _settleMock(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 3));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Signed-out users see the welcome screen', (tester) async {
     await tester.pumpWidget(const SkyApp());
@@ -55,9 +63,41 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Hello from a test');
     await tester.pump(); // let the composer swap mic → send
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pumpAndSettle();
+    await _settleMock(tester);
 
     expect(find.text('Hello from a test'), findsOneWidget);
+  });
+
+  testWidgets('Sending a message triggers an auto-reply', (tester) async {
+    await _signIn(tester);
+
+    await tester.tap(find.text('Amara Okafor').first);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Hi Amara');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await _settleMock(tester);
+
+    // The mock "other participant" types, then replies.
+    expect(find.text('Got it 👍'), findsOneWidget);
+  });
+
+  testWidgets('Attachment menu can send a document', (tester) async {
+    await _signIn(tester);
+
+    await tester.tap(find.text('Amara Okafor').first);
+    await tester.pumpAndSettle();
+
+    // Open the attachment sheet and pick Document.
+    await tester.tap(find.byIcon(Icons.attach_file_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Gallery'), findsOneWidget);
+
+    await tester.tap(find.text('Document'));
+    await _settleMock(tester);
+
+    expect(find.text('Document.pdf'), findsOneWidget);
   });
 
   testWidgets('New-chat picker creates and opens a conversation',

@@ -17,6 +17,19 @@ class MockChatRepository implements ChatRepository {
   List<Chat> _chats;
   final _controller = StreamController<List<Chat>>.broadcast();
 
+  // chatId -> set of user ids currently typing.
+  final Map<String, Set<String>> _typing = {};
+  final _typingController = StreamController<String>.broadcast();
+
+  static const _autoReplies = [
+    'Got it 👍',
+    'Haha nice',
+    'Sounds good!',
+    'On it 🙌',
+    'Let me check and get back to you.',
+  ];
+  int _replyIndex = 0;
+
   @override
   Stream<List<Chat>> watchChats(String userId) async* {
     yield _chats;
@@ -40,6 +53,38 @@ class MockChatRepository implements ChatRepository {
     });
     Future.delayed(const Duration(milliseconds: 1400), () {
       _setStatus(message.chatId, message.id, MessageStatus.delivered);
+    });
+
+    _maybeAutoReply(message);
+  }
+
+  /// In a 1:1 chat, make the other person look alive: show them typing for a
+  /// beat, then drop in a canned reply. Demonstrates typing + incoming
+  /// messages without a real backend.
+  void _maybeAutoReply(Message message) {
+    if (message.senderId != 'me' || message.type == MessageType.system) return;
+    final chat = _indexOf(message.chatId) == -1
+        ? null
+        : _chats[_indexOf(message.chatId)];
+    if (chat == null || chat.isGroup) return;
+    final other = chat.participants.firstWhere(
+      (u) => u.id != 'me',
+      orElse: () => chat.participants.first,
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
+      setTyping(chat.id, other.id, true);
+    });
+    Future.delayed(const Duration(milliseconds: 2100), () {
+      setTyping(chat.id, other.id, false);
+      _appendMessage(Message(
+        id: 'auto_${DateTime.now().microsecondsSinceEpoch}',
+        chatId: chat.id,
+        senderId: other.id,
+        text: _autoReplies[_replyIndex++ % _autoReplies.length],
+        timestamp: DateTime.now(),
+      ));
+      _emit();
     });
   }
 
@@ -89,7 +134,32 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  void dispose() => _controller.close();
+  Stream<List<String>> watchTyping(String chatId, String myId) async* {
+    yield _typingFor(chatId, myId);
+    yield* _typingController.stream
+        .where((id) => id == chatId)
+        .map((_) => _typingFor(chatId, myId));
+  }
+
+  @override
+  void setTyping(String chatId, String userId, bool isTyping) {
+    final set = _typing.putIfAbsent(chatId, () => <String>{});
+    if (isTyping) {
+      set.add(userId);
+    } else {
+      set.remove(userId);
+    }
+    if (!_typingController.isClosed) _typingController.add(chatId);
+  }
+
+  List<String> _typingFor(String chatId, String myId) =>
+      (_typing[chatId] ?? const <String>{}).where((u) => u != myId).toList();
+
+  @override
+  void dispose() {
+    _controller.close();
+    _typingController.close();
+  }
 
   Chat? _existingDirect(String otherId) {
     for (final c in _chats) {
