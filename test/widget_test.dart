@@ -60,6 +60,23 @@ void main() {
     expect(find.text('Hello from a test'), findsOneWidget);
   });
 
+  testWidgets('Attachment menu can send a document', (tester) async {
+    await _signIn(tester);
+
+    await tester.tap(find.text('Amara Okafor').first);
+    await tester.pumpAndSettle();
+
+    // Open the attachment sheet and pick Document.
+    await tester.tap(find.byIcon(Icons.attach_file_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Gallery'), findsOneWidget);
+
+    await tester.tap(find.text('Document'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Document.pdf'), findsOneWidget);
+  });
+
   testWidgets('New-chat picker creates and opens a conversation',
       (tester) async {
     await _signIn(tester);

@@ -141,6 +141,47 @@ class ChatStore extends ChangeNotifier {
 
   void markRead(String chatId) => _repo.markRead(chatId, myId);
 
+  /// Send an image message. [mediaUrl] points at the (already-uploaded) image;
+  /// until device capture + Storage upload land, callers pass a sample URL.
+  void sendImage(String chatId, {String? caption, String? mediaUrl}) {
+    _send(
+      chatId,
+      type: MessageType.image,
+      text: caption?.trim() ?? '',
+      mediaUrl: mediaUrl,
+    );
+  }
+
+  /// Send a voice note of [seconds] length.
+  void sendVoiceNote(String chatId, int seconds) {
+    _send(chatId, type: MessageType.voice, durationSeconds: seconds);
+  }
+
+  /// Send a file/document message labelled [fileName].
+  void sendFile(String chatId, String fileName) {
+    _send(chatId, type: MessageType.file, text: fileName);
+  }
+
+  void _send(
+    String chatId, {
+    required MessageType type,
+    String text = '',
+    String? mediaUrl,
+    int? durationSeconds,
+  }) {
+    _repo.sendMessage(Message(
+      id: _uuid.v4(),
+      chatId: chatId,
+      senderId: myId,
+      text: text,
+      type: type,
+      mediaUrl: mediaUrl,
+      durationSeconds: durationSeconds,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    ));
+  }
+
   @override
   void dispose() {
     _disposed = true;

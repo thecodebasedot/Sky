@@ -95,6 +95,24 @@ class _ChatScreenState extends State<ChatScreen> {
               store.sendText(widget.chatId, text);
               _jumpToBottom();
             },
+            onSendImage: () {
+              // Until device capture + Storage upload land, send a sample
+              // image so the flow is exercised end to end.
+              store.sendImage(
+                widget.chatId,
+                mediaUrl:
+                    'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/600/400',
+              );
+              _jumpToBottom();
+            },
+            onSendFile: () {
+              store.sendFile(widget.chatId, 'Document.pdf');
+              _jumpToBottom();
+            },
+            onSendVoice: (seconds) {
+              store.sendVoiceNote(widget.chatId, seconds);
+              _jumpToBottom();
+            },
           ),
         ],
       ),

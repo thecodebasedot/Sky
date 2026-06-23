@@ -113,14 +113,30 @@ class MessageBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 200,
-          height: 150,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 200,
+            height: 150,
+            child: message.mediaUrl != null
+                ? Image.network(
+                    message.mediaUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return _imageFallback(const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ));
+                    },
+                    errorBuilder: (_, __, ___) => _imageFallback(null),
+                  )
+                : _imageFallback(null),
           ),
-          child: const Icon(Icons.image_rounded, size: 48, color: Colors.grey),
         ),
         if (message.text.isNotEmpty)
           Padding(
@@ -128,6 +144,16 @@ class MessageBubble extends StatelessWidget {
             child: Text(message.text, style: const TextStyle(fontSize: 15.5)),
           ),
       ],
+    );
+  }
+
+  Widget _imageFallback(Widget? child) {
+    return Container(
+      width: 200,
+      height: 150,
+      color: Colors.black.withValues(alpha: 0.08),
+      child: child ??
+          const Icon(Icons.image_rounded, size: 48, color: Colors.grey),
     );
   }
 

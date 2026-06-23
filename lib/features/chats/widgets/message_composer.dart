@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
 
-/// Bottom input bar: attachment, text field, and send / mic button.
+/// Bottom input bar: attachment menu, text field, and send / mic button.
 class MessageComposer extends StatefulWidget {
-  const MessageComposer({super.key, required this.onSend});
+  const MessageComposer({
+    super.key,
+    required this.onSend,
+    required this.onSendImage,
+    required this.onSendFile,
+    required this.onSendVoice,
+  });
 
+  /// Send a plain text message.
   final ValueChanged<String> onSend;
+
+  /// Send an image (from gallery or camera).
+  final VoidCallback onSendImage;
+
+  /// Send a document/file.
+  final VoidCallback onSendFile;
+
+  /// Send a voice note of the given length in seconds.
+  final ValueChanged<int> onSendVoice;
 
   @override
   State<MessageComposer> createState() => _MessageComposerState();
@@ -36,6 +52,55 @@ class _MessageComposerState extends State<MessageComposer> {
     if (text.trim().isEmpty) return;
     widget.onSend(text);
     _controller.clear();
+  }
+
+  Future<void> _openAttachmentSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        Widget option(IconData icon, String label, Color color, VoidCallback
+            onTap) {
+          return InkWell(
+            onTap: () {
+              Navigator.of(sheetContext).pop();
+              onTap();
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: color,
+                  child: Icon(icon, color: Colors.white),
+                ),
+                const SizedBox(height: 6),
+                Text(label, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            runSpacing: 20,
+            children: [
+              option(Icons.photo_rounded, 'Gallery', const Color(0xFF7E57C2),
+                  widget.onSendImage),
+              option(Icons.camera_alt_rounded, 'Camera',
+                  const Color(0xFFD81B60), widget.onSendImage),
+              option(Icons.insert_drive_file_rounded, 'Document',
+                  const Color(0xFF1E88E5), widget.onSendFile),
+              option(Icons.headset_rounded, 'Audio', const Color(0xFFEF6C00),
+                  () => widget.onSendVoice(8)),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -78,13 +143,13 @@ class _MessageComposerState extends State<MessageComposer> {
                     IconButton(
                       icon: const Icon(Icons.attach_file_rounded),
                       color: theme.colorScheme.outline,
-                      onPressed: () {},
+                      onPressed: _openAttachmentSheet,
                     ),
                     if (!_hasText)
                       IconButton(
                         icon: const Icon(Icons.camera_alt_rounded),
                         color: theme.colorScheme.outline,
-                        onPressed: () {},
+                        onPressed: widget.onSendImage,
                       ),
                   ],
                 ),
@@ -95,7 +160,7 @@ class _MessageComposerState extends State<MessageComposer> {
               heroTag: 'composer-send',
               elevation: 0,
               backgroundColor: AppTheme.skyBlue,
-              onPressed: _hasText ? _send : () {},
+              onPressed: _hasText ? _send : () => widget.onSendVoice(5),
               child: Icon(
                 _hasText ? Icons.send_rounded : Icons.mic_rounded,
                 color: Colors.white,
