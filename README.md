@@ -23,7 +23,8 @@ and status updates. This repository holds all of the engineering work.
 | **Media sharing**: attachment menu, image / voice / file messages | ✅ In-app flow built |
 | **Typing indicators** + online / last-seen presence | ✅ Built (mock + Firestore) |
 | **Photo capture + upload** (image_picker + Firebase Storage) | ✅ Built (mock sends a sample) |
-| Calls (WebRTC), push notifications | ⏳ Planned |
+| **Call lifecycle & in-call UI** (dial → ring → connect → duration → end) | ✅ Built (simulated) |
+| WebRTC media + signaling, push notifications | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -135,7 +136,9 @@ Actions (`.github/workflows/ci.yml`).
    (mock simulates the other participant typing and auto-replying)
 7. **Photo upload** ✅ — `image_picker` capture + Firebase Storage upload behind a
    `MediaService` abstraction (mock attaches a sample image; `storage.rules` included)
-8. **Calls** — WebRTC voice & video, push-based call signaling
+8. **Calls** 🟡 — in-call lifecycle & UI behind a `CallService` abstraction
+   (dial → ring → connect → live duration → end, with mute/video/speaker), on a
+   simulated `MockCallService`. _Next: real `flutter_webrtc` media + Firestore signaling._
 9. **Status** — 24h-expiring uploads, privacy controls
 10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
