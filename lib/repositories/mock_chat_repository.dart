@@ -3,6 +3,7 @@ import 'dart:async';
 import '../data/mock_data.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
+import '../models/user.dart';
 import 'chat_repository.dart';
 
 /// In-memory [ChatRepository] backed by [MockData].
@@ -51,7 +52,51 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
+  Future<List<SkyUser>> fetchContacts(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return MockData.contacts.where((u) => u.id != userId).toList();
+  }
+
+  @override
+  Future<Chat> startDirectChat(SkyUser me, SkyUser other) async {
+    final existing = _existingDirect(other.id);
+    if (existing != null) return existing;
+
+    final chat = Chat(
+      id: 'dm_${other.id}',
+      participants: [me, other],
+    );
+    _chats = [..._chats, chat];
+    _emit();
+    return chat;
+  }
+
+  @override
+  Future<Chat> createGroup({
+    required SkyUser me,
+    required List<SkyUser> members,
+    required String name,
+  }) async {
+    final chat = Chat(
+      id: 'group_${DateTime.now().microsecondsSinceEpoch}',
+      participants: [me, ...members],
+      isGroup: true,
+      name: name,
+    );
+    _chats = [..._chats, chat];
+    _emit();
+    return chat;
+  }
+
+  @override
   void dispose() => _controller.close();
+
+  Chat? _existingDirect(String otherId) {
+    for (final c in _chats) {
+      if (!c.isGroup && c.participants.any((u) => u.id == otherId)) return c;
+    }
+    return null;
+  }
 
   // ---- internals ----
 
