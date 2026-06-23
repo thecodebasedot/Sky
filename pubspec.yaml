@@ -24,6 +24,10 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.2
+
+  # Media capture (used on the Firebase path; mock returns a sample image)
+  image_picker: ^1.1.2
 
   # Utilities
   intl: ^0.19.0

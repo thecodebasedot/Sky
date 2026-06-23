@@ -49,13 +49,29 @@ the required Gradle/Pod wiring.
 > `cd ios && pod install`.
 
 ## 4. Deploy the security rules
-The repo ships with `firestore.rules` (participants-only access). Deploy them:
+The repo ships with `firestore.rules` (participants-only access) and
+`storage.rules` (signed-in image uploads). Deploy them:
 ```bash
 firebase deploy --only firestore:rules
+firebase deploy --only storage          # requires Storage enabled in the console
 ```
 You may also want a composite index for the chats query. If the app logs a
 "requires an index" link at runtime, click it to auto-create the index for
 `chats` on `participantIds (array-contains) + updatedAt (desc)`.
+
+### Media uploads (photos)
+Photo sharing uses `image_picker` + Firebase Storage. Enable **Build → Storage**
+in the Firebase console, then add the platform permission strings:
+
+- **iOS** (`ios/Runner/Info.plist`):
+  - `NSPhotoLibraryUsageDescription` — "Sky needs access to your photos to share them."
+  - `NSCameraUsageDescription` — "Sky needs camera access to take photos."
+- **Android**: gallery needs no extra permission; the camera uses
+  `image_picker`'s bundled `CAMERA` declaration. No manual changes required for
+  typical use.
+
+On the mock backend, "Gallery"/"Camera" just attach a sample image — no
+permissions needed.
 
 ## 5. Run with Firebase enabled
 ```bash

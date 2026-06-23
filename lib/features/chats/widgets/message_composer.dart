@@ -19,8 +19,8 @@ class MessageComposer extends StatefulWidget {
   /// Report whether the user is currently composing.
   final ValueChanged<bool> onTyping;
 
-  /// Send an image (from gallery or camera).
-  final VoidCallback onSendImage;
+  /// Pick & send an image; the bool is true for the camera, false for gallery.
+  final ValueChanged<bool> onSendImage;
 
   /// Send a document/file.
   final VoidCallback onSendFile;
@@ -97,9 +97,9 @@ class _MessageComposerState extends State<MessageComposer> {
             runSpacing: 20,
             children: [
               option(Icons.photo_rounded, 'Gallery', const Color(0xFF7E57C2),
-                  widget.onSendImage),
+                  () => widget.onSendImage(false)),
               option(Icons.camera_alt_rounded, 'Camera',
-                  const Color(0xFFD81B60), widget.onSendImage),
+                  const Color(0xFFD81B60), () => widget.onSendImage(true)),
               option(Icons.insert_drive_file_rounded, 'Document',
                   const Color(0xFF1E88E5), widget.onSendFile),
               option(Icons.headset_rounded, 'Audio', const Color(0xFFEF6C00),
@@ -157,7 +157,7 @@ class _MessageComposerState extends State<MessageComposer> {
                       IconButton(
                         icon: const Icon(Icons.camera_alt_rounded),
                         color: theme.colorScheme.outline,
-                        onPressed: widget.onSendImage,
+                        onPressed: () => widget.onSendImage(true),
                       ),
                   ],
                 ),

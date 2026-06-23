@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/chat.dart';
+import '../../services/media_service.dart';
 import '../../state/chat_store.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
@@ -23,11 +24,13 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   late final ChatStore _store;
+  late final MediaService _media;
 
   @override
   void initState() {
     super.initState();
     _store = context.read<ChatStore>();
+    _media = context.read<MediaService>();
     // Start streaming this conversation's messages.
     _store.openChat(widget.chatId);
   }
@@ -96,14 +99,15 @@ class _ChatScreenState extends State<ChatScreen> {
               store.sendText(widget.chatId, text);
               _jumpToBottom();
             },
-            onSendImage: () {
-              // Until device capture + Storage upload land, send a sample
-              // image so the flow is exercised end to end.
-              store.sendImage(
-                widget.chatId,
-                mediaUrl:
-                    'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/600/400',
+            onSendImage: (fromCamera) async {
+              // Pick + upload via MediaService (mock returns a sample image;
+              // Firebase uses image_picker + Storage), then send the URL.
+              final url = await _media.pickAndUploadImage(
+                chatId: widget.chatId,
+                fromCamera: fromCamera,
               );
+              if (url == null) return;
+              _store.sendImage(widget.chatId, mediaUrl: url);
               _jumpToBottom();
             },
             onSendFile: () {
