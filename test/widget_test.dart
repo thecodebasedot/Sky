@@ -29,6 +29,14 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Advance past the mock backend's simulated delays (delivery acks + the
+/// other participant's typing/auto-reply), then settle. Without this, those
+/// pending timers trip the "Timer still pending after dispose" check.
+Future<void> _settleMock(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 3));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Signed-out users see the welcome screen', (tester) async {
     await tester.pumpWidget(const SkyApp());
@@ -55,7 +63,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Hello from a test');
     await tester.pump(); // let the composer swap mic → send
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pumpAndSettle();
+    await _settleMock(tester);
 
     expect(find.text('Hello from a test'), findsOneWidget);
   });
@@ -69,7 +77,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Hi Amara');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pumpAndSettle();
+    await _settleMock(tester);
 
     // The mock "other participant" types, then replies.
     expect(find.text('Got it 👍'), findsOneWidget);
@@ -87,7 +95,7 @@ void main() {
     expect(find.text('Gallery'), findsOneWidget);
 
     await tester.tap(find.text('Document'));
-    await tester.pumpAndSettle();
+    await _settleMock(tester);
 
     expect(find.text('Document.pdf'), findsOneWidget);
   });
