@@ -84,13 +84,14 @@ channel** (offer/answer/ICE under `calls/{callId}`; rules included in
   `CAMERA`, `RECORD_AUDIO`, `INTERNET`, plus `MODIFY_AUDIO_SETTINGS`.
   `minSdkVersion` ≥ 23.
 
-> ⚠️ **Device-bound & not yet complete for production.** The caller flow
-> (place a call → offer → apply answer → exchange ICE) is implemented and must
-> be verified on **two physical devices**. Still to wire for real-world use:
-> the **incoming-call listener** (so the callee's device rings — watch `calls`
-> where `calleeId == myUid` and present the call screen as callee), and a
-> **TURN server** for calls that can't traverse NAT (STUN alone isn't enough on
-> many networks). On the mock backend, calls are fully simulated — no
+> ⚠️ **Device-bound.** Caller + callee flows (offer → answer → exchange ICE)
+> and **incoming-call ringing** (the callee's device watches `calls` where
+> `calleeId == myUid` and shows an accept/decline screen) are implemented, but
+> must be verified on **two physical devices**. The incoming-call query needs a
+> composite index on `calls` (`calleeId ==` + `status ==`) — click the
+> "requires an index" link the app logs at runtime to create it. A **TURN
+> server** is still required for calls that can't traverse NAT (STUN alone isn't
+> enough on many networks). On the mock backend, calls are fully simulated — no
 > permissions or devices needed.
 
 ## 5. Run with Firebase enabled

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:sky/app.dart';
+import 'package:sky/features/calls/incoming_call_screen.dart';
+import 'package:sky/models/user.dart';
+import 'package:sky/services/incoming_call_service.dart';
 
 /// Drives the sign-in flow: welcome → phone → OTP → profile setup → home.
 Future<void> _signIn(WidgetTester tester) async {
@@ -116,5 +120,30 @@ void main() {
     // We land in the conversation with Noah.
     expect(find.text('Noah Kim'), findsWidgets);
     expect(find.text('Select contact'), findsNothing);
+  });
+
+  testWidgets('Incoming call screen shows the caller with accept/decline',
+      (tester) async {
+    const caller = SkyUser(id: 'u_caller', name: 'Ada Lovelace');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Provider<IncomingCallService>(
+          create: (_) => MockIncomingCallService(),
+          child: const IncomingCallScreen(
+            call: IncomingCall(
+              callId: 'call_1',
+              caller: caller,
+              isVideo: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ada Lovelace'), findsOneWidget);
+    expect(find.text('Incoming video call…'), findsOneWidget);
+    expect(find.text('Accept'), findsOneWidget);
+    expect(find.text('Decline'), findsOneWidget);
   });
 }

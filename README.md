@@ -24,7 +24,8 @@ and status updates. This repository holds all of the engineering work.
 | **Typing indicators** + online / last-seen presence | ✅ Built (mock + Firestore) |
 | **Photo capture + upload** (image_picker + Firebase Storage) | ✅ Built (mock sends a sample) |
 | **Call lifecycle & in-call UI** (dial → ring → connect → duration → end) | ✅ Built (simulated) |
-| **WebRTC voice/video** + Firestore signaling | 🟡 Caller flow built (needs device + incoming-call/TURN) |
+| **WebRTC voice/video** + Firestore signaling | 🟡 Caller + callee built (needs device + TURN) |
+| **Incoming-call ringing** (watch → accept/decline) | ✅ Built (Firestore-driven) |
 | Push notifications, status uploads, E2E encryption | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
@@ -137,10 +138,10 @@ Actions (`.github/workflows/ci.yml`).
    (mock simulates the other participant typing and auto-replying)
 7. **Photo upload** ✅ — `image_picker` capture + Firebase Storage upload behind a
    `MediaService` abstraction (mock attaches a sample image; `storage.rules` included)
-8. **Calls** 🟡 — in-call lifecycle & UI behind a `CallService` abstraction, plus a
-   real `WebRTCCallService` (flutter_webrtc media + Firestore offer/answer/ICE
-   signaling, caller flow). _Needs on-device verification; incoming-call ringing +
-   TURN are the remaining wiring for production._
+8. **Calls** 🟡 — in-call lifecycle & UI behind a `CallService` abstraction; real
+   `WebRTCCallService` (flutter_webrtc + Firestore offer/answer/ICE, caller & callee);
+   and **incoming-call ringing** (watch Firestore → accept/decline → answer as callee).
+   _Needs on-device verification; a TURN server is the remaining piece for production._
 9. **Status** — 24h-expiring uploads, privacy controls
 10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
