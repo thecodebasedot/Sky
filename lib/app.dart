@@ -4,13 +4,16 @@ import 'package:provider/provider.dart';
 import 'config/app_config.dart';
 import 'features/auth/profile_setup_screen.dart';
 import 'features/auth/welcome_screen.dart';
+import 'features/calls/incoming_call_listener.dart';
 import 'features/home/home_screen.dart';
 import 'repositories/chat_repository.dart';
 import 'repositories/firestore_chat_repository.dart';
 import 'repositories/mock_chat_repository.dart';
 import 'services/auth_service.dart';
 import 'services/firebase_auth_service.dart';
+import 'services/firebase_incoming_call_service.dart';
 import 'services/firebase_media_service.dart';
+import 'services/incoming_call_service.dart';
 import 'services/media_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
@@ -28,6 +31,11 @@ ChatRepository _buildChatRepository() =>
 MediaService _buildMediaService() =>
     AppConfig.useFirebase ? FirebaseMediaService() : MockMediaService();
 
+/// Selects the incoming-call backend based on [AppConfig].
+IncomingCallService _buildIncomingCallService() => AppConfig.useFirebase
+    ? FirebaseIncomingCallService()
+    : MockIncomingCallService();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -38,6 +46,9 @@ class SkyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthStore(_buildAuthService())),
         Provider<MediaService>(create: (_) => _buildMediaService()),
+        Provider<IncomingCallService>(
+          create: (_) => _buildIncomingCallService(),
+        ),
         // ChatStore lives above the navigator so pushed screens can read it,
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(
@@ -71,7 +82,8 @@ class _AuthGate extends StatelessWidget {
     final status = context.watch<AuthStore>().status;
 
     final Widget child = switch (status) {
-      AuthStatus.authenticated => const HomeScreen(),
+      AuthStatus.authenticated =>
+        const IncomingCallListener(child: HomeScreen()),
       AuthStatus.needsProfile => const ProfileSetupScreen(),
       _ => const WelcomeScreen(),
     };

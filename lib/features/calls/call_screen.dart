@@ -14,10 +14,22 @@ import '../../widgets/avatar.dart';
 /// [MockCallService] (simulated lifecycle); a flutter_webrtc implementation
 /// drops into the same interface next.
 class CallScreen extends StatefulWidget {
-  const CallScreen({super.key, required this.user, required this.isVideo});
+  const CallScreen({
+    super.key,
+    required this.user,
+    required this.isVideo,
+    this.callId,
+    this.incoming = false,
+  });
 
   final SkyUser user;
   final bool isVideo;
+
+  /// For an incoming call: the existing signaling call id to answer.
+  final String? callId;
+
+  /// True when answering a call (callee) rather than placing one (caller).
+  final bool incoming;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -37,6 +49,16 @@ class _CallScreenState extends State<CallScreen> {
   CallService _createService() {
     if (AppConfig.useFirebase) {
       final myId = context.read<AuthStore>().user?.id ?? 'me';
+      if (widget.incoming && widget.callId != null) {
+        // Answering: we are the callee; widget.user is the caller.
+        return WebRTCCallService(
+          callId: widget.callId!,
+          callerId: widget.user.id,
+          calleeId: myId,
+          video: widget.isVideo,
+          isCaller: false,
+        );
+      }
       return WebRTCCallService(
         callId: const Uuid().v4(),
         callerId: myId,
