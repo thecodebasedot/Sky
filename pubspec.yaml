@@ -29,6 +29,9 @@ dependencies:
   # Media capture (used on the Firebase path; mock returns a sample image)
   image_picker: ^1.1.2
 
+  # Real-time voice/video (used on the Firebase path with Firestore signaling)
+  flutter_webrtc: ^0.12.5
+
   # Utilities
   intl: ^0.19.0
   uuid: ^4.4.0
