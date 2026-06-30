@@ -94,6 +94,25 @@ channel** (offer/answer/ICE under `calls/{callId}`; rules included in
 > enough on many networks). On the mock backend, calls are fully simulated — no
 > permissions or devices needed.
 
+### Push notifications (FCM)
+So messages and calls arrive when the app is closed:
+
+1. The app already registers each device's FCM token under
+   `users/{uid}.fcmTokens` and handles foreground/background messages
+   (`firebase_messaging`). **iOS** also needs the **APNs key** uploaded in
+   Firebase console → Project settings → Cloud Messaging, plus the *Push
+   Notifications* + *Background Modes (Remote notifications)* capabilities in
+   Xcode.
+2. *Sending* a push needs a trusted server — the repo ships Cloud Functions in
+   [`functions/`](../functions) that fan messages/calls out to the recipients'
+   tokens. Deploy them (requires the **Blaze** plan):
+   ```bash
+   cd functions && npm install && cd ..
+   firebase deploy --only functions
+   ```
+   `onNewMessage` notifies the other chat participants; `onCallRinging`
+   notifies the callee.
+
 ## 5. Run with Firebase enabled
 ```bash
 flutter pub get

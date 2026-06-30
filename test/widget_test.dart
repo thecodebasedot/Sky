@@ -5,6 +5,7 @@ import 'package:sky/app.dart';
 import 'package:sky/features/calls/incoming_call_screen.dart';
 import 'package:sky/models/user.dart';
 import 'package:sky/services/incoming_call_service.dart';
+import 'package:sky/services/notification_service.dart';
 
 /// Drives the sign-in flow: welcome → phone → OTP → profile setup → home.
 Future<void> _signIn(WidgetTester tester) async {
@@ -165,5 +166,11 @@ void main() {
     // Back on the Status tab, my status now has an update.
     expect(find.text('My status'), findsOneWidget);
     expect(find.text('Tap to add status update'), findsNothing);
+  });
+
+  test('MockNotificationService init/clear are safe no-ops', () async {
+    final notifications = MockNotificationService();
+    await notifications.init('u_test');
+    await notifications.clear('u_test');
   });
 }
