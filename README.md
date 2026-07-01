@@ -27,7 +27,8 @@ and status updates. This repository holds all of the engineering work.
 | **WebRTC voice/video** + Firestore signaling | 🟡 Caller + callee built (needs device + TURN) |
 | **Incoming-call ringing** (watch → accept/decline) | ✅ Built (Firestore-driven) |
 | **Status uploads** — post text/photo, 24h stories | ✅ Built (mock + Firestore) |
-| Push notifications, E2E encryption | ⏳ Planned |
+| **E2E encryption core** — X25519 + AES-GCM cipher | ✅ Built & tested (pipeline integration next) |
+| Push notifications, TURN server | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -145,7 +146,10 @@ Actions (`.github/workflows/ci.yml`).
    _Needs on-device verification; a TURN server is the remaining piece for production._
 9. **Status** ✅ — post text (colored cards) & photo statuses that stream from a
    `StatusRepository`; items expire after 24h (mock + Firestore, `statuses` rules)
-10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
+10. **E2E encryption** 🟡 — tested crypto core behind `EncryptionService` (X25519
+   ECDH + AES-256-GCM, pure Dart). _Next: publish public keys, encrypt the message
+   pipeline for 1:1 chats, persist keys in the platform keystore._
+11. **Hardening** — push notifications (FCM), TURN server, offline cache
 
 ---
 
