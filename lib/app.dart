@@ -20,7 +20,7 @@ import 'services/firebase_media_service.dart';
 import 'services/conversation_cipher.dart';
 import 'services/incoming_call_service.dart';
 import 'services/firebase_notification_service.dart';
-import 'services/firebase_public_key_directory.dart';
+import 'services/firestore_public_key_directory.dart';
 import 'services/media_service.dart';
 import 'services/notification_service.dart';
 import 'services/public_key_directory.dart';
