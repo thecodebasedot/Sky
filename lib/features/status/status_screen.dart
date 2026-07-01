@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../data/mock_data.dart';
 import '../../models/story.dart';
-import '../../state/chat_store.dart';
+import '../../models/user.dart';
+import '../../state/auth_store.dart';
+import '../../state/status_store.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/avatar.dart';
+import 'status_composer_screen.dart';
 
 /// The "Status" tab — your update plus recent ones from contacts.
 class StatusScreen extends StatelessWidget {
@@ -14,13 +17,16 @@ class StatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stories = context.watch<ChatStore>().stories;
-    final recent = stories.where((s) => !s.seen).toList();
-    final viewed = stories.where((s) => s.seen).toList();
+    final store = context.watch<StatusStore>();
+    final me = context.read<AuthStore>().user ?? MockData.me;
+    final others = store.othersStories(me.id);
+    final recent = others.where((s) => !s.seen).toList();
+    final viewed = others.where((s) => s.seen).toList();
+    final myStory = store.myStory(me.id);
 
     return ListView(
       children: [
-        _myStatus(context),
+        _myStatus(context, me, myStory),
         const Divider(height: 1),
         if (recent.isNotEmpty) _sectionHeader(context, 'Recent updates'),
         ...recent.map((s) => _storyTile(context, s)),
@@ -30,12 +36,12 @@ class StatusScreen extends StatelessWidget {
     );
   }
 
-  Widget _myStatus(BuildContext context) {
+  Widget _myStatus(BuildContext context, SkyUser me, Story? myStory) {
     return ListTile(
-      leading: const Stack(
+      leading: Stack(
         children: [
-          Avatar(user: MockData.me, radius: 24),
-          Positioned(
+          Avatar(user: me, radius: 24),
+          const Positioned(
             right: 0,
             bottom: 0,
             child: CircleAvatar(
@@ -48,8 +54,14 @@ class StatusScreen extends StatelessWidget {
       ),
       title: const Text('My status',
           style: TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: const Text('Tap to add status update'),
-      onTap: () {},
+      subtitle: Text(
+        myStory != null
+            ? TimeFormat.relative(myStory.latest)
+            : 'Tap to add status update',
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StatusComposerScreen()),
+      ),
     );
   }
 

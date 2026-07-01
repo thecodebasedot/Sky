@@ -146,4 +146,24 @@ void main() {
     expect(find.text('Accept'), findsOneWidget);
     expect(find.text('Decline'), findsOneWidget);
   });
+
+  testWidgets('Posting a text status updates My status', (tester) async {
+    await _signIn(tester);
+
+    // Switch to the Status tab.
+    await tester.tap(find.text('Status'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tap to add status update'), findsOneWidget);
+
+    // Open the composer, type, and post.
+    await tester.tap(find.text('My status'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Hello status');
+    await tester.tap(find.byIcon(Icons.send_rounded));
+    await tester.pumpAndSettle();
+
+    // Back on the Status tab, my status now has an update.
+    expect(find.text('My status'), findsOneWidget);
+    expect(find.text('Tap to add status update'), findsNothing);
+  });
 }
