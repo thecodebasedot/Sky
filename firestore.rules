@@ -65,5 +65,12 @@ service cloud.firestore {
         allow read, write: if isSignedIn();
       }
     }
+
+    // Status updates ("stories"). Any signed-in user may read; only the owner
+    // may post to their own status document.
+    match /statuses/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
   }
 }

@@ -26,7 +26,8 @@ and status updates. This repository holds all of the engineering work.
 | **Call lifecycle & in-call UI** (dial → ring → connect → duration → end) | ✅ Built (simulated) |
 | **WebRTC voice/video** + Firestore signaling | 🟡 Caller + callee built (needs device + TURN) |
 | **Incoming-call ringing** (watch → accept/decline) | ✅ Built (Firestore-driven) |
-| Push notifications, status uploads, E2E encryption | ⏳ Planned |
+| **Status uploads** — post text/photo, 24h stories | ✅ Built (mock + Firestore) |
+| Push notifications, E2E encryption | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -142,7 +143,8 @@ Actions (`.github/workflows/ci.yml`).
    `WebRTCCallService` (flutter_webrtc + Firestore offer/answer/ICE, caller & callee);
    and **incoming-call ringing** (watch Firestore → accept/decline → answer as callee).
    _Needs on-device verification; a TURN server is the remaining piece for production._
-9. **Status** — 24h-expiring uploads, privacy controls
+9. **Status** ✅ — post text (colored cards) & photo statuses that stream from a
+   `StatusRepository`; items expire after 24h (mock + Firestore, `statuses` rules)
 10. **Hardening** — end-to-end encryption, push notifications (FCM), offline cache
 
 ---

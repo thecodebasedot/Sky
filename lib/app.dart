@@ -8,7 +8,10 @@ import 'features/calls/incoming_call_listener.dart';
 import 'features/home/home_screen.dart';
 import 'repositories/chat_repository.dart';
 import 'repositories/firestore_chat_repository.dart';
+import 'repositories/firestore_status_repository.dart';
 import 'repositories/mock_chat_repository.dart';
+import 'repositories/mock_status_repository.dart';
+import 'repositories/status_repository.dart';
 import 'services/auth_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/firebase_incoming_call_service.dart';
@@ -17,6 +20,7 @@ import 'services/incoming_call_service.dart';
 import 'services/media_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
+import 'state/status_store.dart';
 import 'theme/app_theme.dart';
 
 /// Selects the auth backend based on [AppConfig].
@@ -36,6 +40,11 @@ IncomingCallService _buildIncomingCallService() => AppConfig.useFirebase
     ? FirebaseIncomingCallService()
     : MockIncomingCallService();
 
+/// Selects the status backend based on [AppConfig].
+StatusRepository _buildStatusRepository() => AppConfig.useFirebase
+    ? FirestoreStatusRepository()
+    : MockStatusRepository();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -53,6 +62,15 @@ class SkyApp extends StatelessWidget {
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(
           create: (_) => ChatStore(_buildChatRepository()),
+          update: (_, auth, store) {
+            store!.bind(
+              auth.status == AuthStatus.authenticated ? auth.user?.id : null,
+            );
+            return store;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthStore, StatusStore>(
+          create: (_) => StatusStore(_buildStatusRepository()),
           update: (_, auth, store) {
             store!.bind(
               auth.status == AuthStatus.authenticated ? auth.user?.id : null,
