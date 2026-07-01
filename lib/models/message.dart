@@ -46,4 +46,19 @@ class Message {
       durationSeconds: durationSeconds,
     );
   }
+
+  /// A copy with replaced [text] (used to swap ciphertext for cleartext).
+  Message withText(String text) {
+    return Message(
+      id: id,
+      chatId: chatId,
+      senderId: senderId,
+      timestamp: timestamp,
+      text: text,
+      type: type,
+      status: status,
+      mediaUrl: mediaUrl,
+      durationSeconds: durationSeconds,
+    );
+  }
 }

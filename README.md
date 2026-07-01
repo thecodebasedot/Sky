@@ -27,7 +27,7 @@ and status updates. This repository holds all of the engineering work.
 | **WebRTC voice/video** + Firestore signaling | 🟡 Caller + callee built (needs device + TURN) |
 | **Incoming-call ringing** (watch → accept/decline) | ✅ Built (Firestore-driven) |
 | **Status uploads** — post text/photo, 24h stories | ✅ Built (mock + Firestore) |
-| **E2E encryption core** — X25519 + AES-GCM cipher | ✅ Built & tested (pipeline integration next) |
+| **E2E encryption** — X25519 + AES-GCM, wired into 1:1 message pipeline | ✅ Built & tested (keystore persistence next) |
 | **Push notifications** (FCM token reg + Cloud Functions sender) | ✅ Built (needs device + deploy) |
 | TURN server, offline cache | ⏳ Planned |
 
@@ -147,9 +147,11 @@ Actions (`.github/workflows/ci.yml`).
    _Needs on-device verification; a TURN server is the remaining piece for production._
 9. **Status** ✅ — post text (colored cards) & photo statuses that stream from a
    `StatusRepository`; items expire after 24h (mock + Firestore, `statuses` rules)
-10. **E2E encryption** 🟡 — tested crypto core behind `EncryptionService` (X25519
-    ECDH + AES-256-GCM, pure Dart). _Next: publish public keys, encrypt the message
-    pipeline for 1:1 chats, persist keys in the platform keystore._
+10. **E2E encryption** ✅ — X25519 ECDH + AES-256-GCM behind `EncryptionService`,
+    wired into the 1:1 message pipeline: public keys published on sign-in
+    (`PublicKeyDirectory`), text encrypted on send / decrypted on receive via
+    `ConversationCipher` (`ChatStore`), plaintext fallback when no key exists.
+    _Next: persist the private key in the platform keystore; group E2E + safety numbers._
 11. **Push notifications** ✅ — FCM token registration + handlers in-app, with Cloud
     Functions (`functions/`) that send on new messages/calls. _Needs device + deploy._
 12. **Hardening** — TURN server, offline cache, safety-number verification

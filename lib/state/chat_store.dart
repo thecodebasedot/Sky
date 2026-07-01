@@ -10,16 +10,22 @@ import '../models/message.dart';
 import '../models/story.dart';
 import '../models/user.dart';
 import '../repositories/chat_repository.dart';
+import '../services/conversation_cipher.dart';
 
 /// App state for messaging, backed by a [ChatRepository].
 ///
 /// Call [bind] with the signed-in user id to start streaming their chats, and
 /// [bind] with `null` on sign-out to tear the subscriptions down. Calls and
 /// stories still come from [MockData] until their own backends land.
+///
+/// Text in 1:1 chats is end-to-end encrypted via [ConversationCipher] before it
+/// leaves the device and decrypted on the way in. On the mock backend the
+/// cipher is a no-op passthrough, so behaviour is unchanged.
 class ChatStore extends ChangeNotifier {
-  ChatStore(this._repo);
+  ChatStore(this._repo, this._cipher);
 
   final ChatRepository _repo;
+  final ConversationCipher _cipher;
   final _uuid = const Uuid();
 
   String? _myId;
@@ -118,9 +124,11 @@ class ChatStore extends ChangeNotifier {
     _typingUserIds = const [];
     _messagesSub?.cancel();
     _typingSub?.cancel();
-    _messagesSub = _repo.watchMessages(chatId).listen((messages) {
+    _messagesSub = _repo.watchMessages(chatId).listen((messages) async {
+      if (_activeChatId != chatId) return;
+      final decrypted = await _decryptAll(chatId, messages);
       if (_activeChatId == chatId) {
-        _activeMessages = messages;
+        _activeMessages = decrypted;
         notifyListeners();
       }
     });
@@ -152,14 +160,40 @@ class ChatStore extends ChangeNotifier {
   void sendText(String chatId, String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+    _sendText(chatId, trimmed);
+  }
+
+  Future<void> _sendText(String chatId, String trimmed) async {
+    final peerId = _peerId(chatId);
+    final payload =
+        peerId != null ? await _cipher.encryptFor(peerId, trimmed) : trimmed;
     _repo.sendMessage(Message(
       id: _uuid.v4(),
       chatId: chatId,
       senderId: myId,
-      text: trimmed,
+      text: payload,
       timestamp: DateTime.now(),
       status: MessageStatus.sending,
     ));
+  }
+
+  /// The other participant in a 1:1 chat, or null for groups / unknown chats
+  /// (encryption only applies to 1:1).
+  String? _peerId(String chatId) {
+    final chat = chatById(chatId);
+    if (chat == null || chat.isGroup) return null;
+    return chat.otherParticipant(myId).id;
+  }
+
+  /// Decrypt the text of 1:1 messages; leave groups and non-text as-is.
+  Future<List<Message>> _decryptAll(String chatId, List<Message> messages) {
+    final peerId = _peerId(chatId);
+    if (peerId == null) return Future.value(messages);
+    return Future.wait(messages.map((m) async {
+      if (m.type != MessageType.text || m.text.isEmpty) return m;
+      final clear = await _cipher.decryptFrom(peerId, m.text);
+      return clear == m.text ? m : m.withText(clear);
+    }));
   }
 
   void markRead(String chatId) => _repo.markRead(chatId, myId);

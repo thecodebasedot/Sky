@@ -17,10 +17,13 @@ import 'services/encryption_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/firebase_incoming_call_service.dart';
 import 'services/firebase_media_service.dart';
+import 'services/conversation_cipher.dart';
 import 'services/incoming_call_service.dart';
 import 'services/firebase_notification_service.dart';
+import 'services/firebase_public_key_directory.dart';
 import 'services/media_service.dart';
 import 'services/notification_service.dart';
+import 'services/public_key_directory.dart';
 import 'services/x25519_encryption_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
@@ -60,6 +63,11 @@ NotificationService _buildNotificationService() => AppConfig.useFirebase
     ? FirebaseNotificationService()
     : MockNotificationService();
 
+/// Selects the public-key directory based on [AppConfig].
+PublicKeyDirectory _buildPublicKeyDirectory() => AppConfig.useFirebase
+    ? FirestorePublicKeyDirectory()
+    : MockPublicKeyDirectory();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -74,13 +82,22 @@ class SkyApp extends StatelessWidget {
           create: (_) => _buildIncomingCallService(),
         ),
         Provider<EncryptionService>(create: (_) => _buildEncryptionService()),
+        Provider<PublicKeyDirectory>(
+          create: (_) => _buildPublicKeyDirectory(),
+        ),
         Provider<NotificationService>(
           create: (_) => _buildNotificationService(),
         ),
         // ChatStore lives above the navigator so pushed screens can read it,
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(
-          create: (_) => ChatStore(_buildChatRepository()),
+          create: (context) => ChatStore(
+            _buildChatRepository(),
+            ConversationCipher(
+              context.read<EncryptionService>(),
+              context.read<PublicKeyDirectory>(),
+            ),
+          ),
           update: (_, auth, store) {
             store!.bind(
               auth.status == AuthStatus.authenticated ? auth.user?.id : null,
@@ -150,7 +167,18 @@ class _SignedInShellState extends State<_SignedInShell> {
     _userId = context.read<AuthStore>().user?.id;
     _notifications = context.read<NotificationService>();
     final id = _userId;
-    if (id != null) _notifications!.init(id);
+    if (id != null) {
+      _notifications!.init(id);
+      _publishPublicKey(id);
+    }
+  }
+
+  /// Publish this device's E2E public key so peers can encrypt to us.
+  Future<void> _publishPublicKey(String userId) async {
+    final encryption = context.read<EncryptionService>();
+    final directory = context.read<PublicKeyDirectory>();
+    final key = await encryption.publicKeyBase64();
+    if (key.isNotEmpty) await directory.publish(userId, key);
   }
 
   @override
