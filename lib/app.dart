@@ -13,11 +13,13 @@ import 'repositories/mock_chat_repository.dart';
 import 'repositories/mock_status_repository.dart';
 import 'repositories/status_repository.dart';
 import 'services/auth_service.dart';
+import 'services/encryption_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/firebase_incoming_call_service.dart';
 import 'services/firebase_media_service.dart';
 import 'services/incoming_call_service.dart';
 import 'services/media_service.dart';
+import 'services/x25519_encryption_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
 import 'state/status_store.dart';
@@ -45,6 +47,12 @@ StatusRepository _buildStatusRepository() => AppConfig.useFirebase
     ? FirestoreStatusRepository()
     : MockStatusRepository();
 
+/// Selects the encryption backend based on [AppConfig]. Real E2E crypto on the
+/// Firebase path; passthrough (plaintext) otherwise.
+EncryptionService _buildEncryptionService() => AppConfig.useFirebase
+    ? X25519EncryptionService()
+    : PlaintextEncryptionService();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -58,6 +66,7 @@ class SkyApp extends StatelessWidget {
         Provider<IncomingCallService>(
           create: (_) => _buildIncomingCallService(),
         ),
+        Provider<EncryptionService>(create: (_) => _buildEncryptionService()),
         // ChatStore lives above the navigator so pushed screens can read it,
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(

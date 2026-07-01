@@ -32,6 +32,9 @@ dependencies:
   # Real-time voice/video (used on the Firebase path with Firestore signaling)
   flutter_webrtc: ^0.12.5
 
+  # End-to-end encryption (pure Dart: X25519 key agreement + AES-GCM)
+  cryptography: ^2.7.0
+
   # Utilities
   intl: ^0.19.0
   uuid: ^4.4.0
