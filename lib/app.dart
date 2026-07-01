@@ -18,7 +18,9 @@ import 'services/firebase_auth_service.dart';
 import 'services/firebase_incoming_call_service.dart';
 import 'services/firebase_media_service.dart';
 import 'services/incoming_call_service.dart';
+import 'services/firebase_notification_service.dart';
 import 'services/media_service.dart';
+import 'services/notification_service.dart';
 import 'services/x25519_encryption_service.dart';
 import 'state/auth_store.dart';
 import 'state/chat_store.dart';
@@ -53,6 +55,11 @@ EncryptionService _buildEncryptionService() => AppConfig.useFirebase
     ? X25519EncryptionService()
     : PlaintextEncryptionService();
 
+/// Selects the notification backend based on [AppConfig].
+NotificationService _buildNotificationService() => AppConfig.useFirebase
+    ? FirebaseNotificationService()
+    : MockNotificationService();
+
 /// Root widget: provides app-wide state and theming.
 class SkyApp extends StatelessWidget {
   const SkyApp({super.key});
@@ -67,6 +74,9 @@ class SkyApp extends StatelessWidget {
           create: (_) => _buildIncomingCallService(),
         ),
         Provider<EncryptionService>(create: (_) => _buildEncryptionService()),
+        Provider<NotificationService>(
+          create: (_) => _buildNotificationService(),
+        ),
         // ChatStore lives above the navigator so pushed screens can read it,
         // and follows the signed-in user via the AuthStore proxy.
         ChangeNotifierProxyProvider<AuthStore, ChatStore>(
@@ -109,8 +119,7 @@ class _AuthGate extends StatelessWidget {
     final status = context.watch<AuthStore>().status;
 
     final Widget child = switch (status) {
-      AuthStatus.authenticated =>
-        const IncomingCallListener(child: HomeScreen()),
+      AuthStatus.authenticated => const _SignedInShell(),
       AuthStatus.needsProfile => const ProfileSetupScreen(),
       _ => const WelcomeScreen(),
     };
@@ -119,5 +128,40 @@ class _AuthGate extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       child: KeyedSubtree(key: ValueKey(status), child: child),
     );
+  }
+}
+
+/// Mounted while signed in: starts session-scoped services (push notification
+/// registration) and hosts the incoming-call listener + home.
+class _SignedInShell extends StatefulWidget {
+  const _SignedInShell();
+
+  @override
+  State<_SignedInShell> createState() => _SignedInShellState();
+}
+
+class _SignedInShellState extends State<_SignedInShell> {
+  NotificationService? _notifications;
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = context.read<AuthStore>().user?.id;
+    _notifications = context.read<NotificationService>();
+    final id = _userId;
+    if (id != null) _notifications!.init(id);
+  }
+
+  @override
+  void dispose() {
+    final id = _userId;
+    if (id != null) _notifications?.clear(id);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const IncomingCallListener(child: HomeScreen());
   }
 }

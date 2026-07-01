@@ -28,7 +28,8 @@ and status updates. This repository holds all of the engineering work.
 | **Incoming-call ringing** (watch → accept/decline) | ✅ Built (Firestore-driven) |
 | **Status uploads** — post text/photo, 24h stories | ✅ Built (mock + Firestore) |
 | **E2E encryption core** — X25519 + AES-GCM cipher | ✅ Built & tested (pipeline integration next) |
-| Push notifications, TURN server | ⏳ Planned |
+| **Push notifications** (FCM token reg + Cloud Functions sender) | ✅ Built (needs device + deploy) |
+| TURN server, offline cache | ⏳ Planned |
 
 ### 🔑 Trying the sign-in flow
 The app boots to a welcome screen. Tap **Agree & continue**, enter any phone
@@ -147,9 +148,11 @@ Actions (`.github/workflows/ci.yml`).
 9. **Status** ✅ — post text (colored cards) & photo statuses that stream from a
    `StatusRepository`; items expire after 24h (mock + Firestore, `statuses` rules)
 10. **E2E encryption** 🟡 — tested crypto core behind `EncryptionService` (X25519
-   ECDH + AES-256-GCM, pure Dart). _Next: publish public keys, encrypt the message
-   pipeline for 1:1 chats, persist keys in the platform keystore._
-11. **Hardening** — push notifications (FCM), TURN server, offline cache
+    ECDH + AES-256-GCM, pure Dart). _Next: publish public keys, encrypt the message
+    pipeline for 1:1 chats, persist keys in the platform keystore._
+11. **Push notifications** ✅ — FCM token registration + handlers in-app, with Cloud
+    Functions (`functions/`) that send on new messages/calls. _Needs device + deploy._
+12. **Hardening** — TURN server, offline cache, safety-number verification
 
 ---
 

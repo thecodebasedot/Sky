@@ -71,6 +71,10 @@ app.*.map.json
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
+# Cloud Functions (Node)
+functions/node_modules/
+functions/.env
+
 # Environment / secrets
 .env
 *.env
